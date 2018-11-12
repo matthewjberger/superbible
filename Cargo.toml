@@ -1,0 +1,7 @@
+[package]
+name = "superbible"
+version = "0.1.0"
+authors = ["Matthew J. Berger <matthewberger@nevada.unr.edu>"]
+
+[dependencies]
+glfw = "0.25.0"

@@ -1,7 +1,6 @@
-mod app;
+mod core;
+use core::Application;
 
 fn main() {
-    let mut application = app::Application::new();
-    application.init(300,300,"test", glfw::WindowMode::Windowed);
-    application.run();
+    let mut application = Application::new(300, 300, "title", glfw::WindowMode::Windowed);
 }

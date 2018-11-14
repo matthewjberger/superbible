@@ -24,7 +24,7 @@ impl Application {
         }
     }
 
-    pub fn run(&mut self, handle_window_event: fn(&mut glfw::Window, glfw::WindowEvent)) {
+    pub fn run(&mut self, render: fn(), handle_window_event: fn(&mut glfw::Window, glfw::WindowEvent)) {
         while !self.window.should_close() {
             self.app_context.poll_events();
             for (_, event) in glfw::flush_messages(&self.event_context) {
@@ -37,5 +37,6 @@ impl Application {
                 handle_window_event(&mut self.window, event)
             }
         }
+        render();
     }
 }

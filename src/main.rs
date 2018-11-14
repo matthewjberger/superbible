@@ -6,7 +6,11 @@ use core::Application;
 
 fn main() {
     let mut _application = Application::new(300, 300, "title", glfw::WindowMode::Windowed);
-    _application.run(handle_window_event);
+    _application.run(render, handle_window_event);
+}
+
+fn render() {
+    
 }
 
 

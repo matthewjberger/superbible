@@ -1,16 +1,22 @@
+extern crate gl;
 extern crate glfw;
+
+// use self::gl::types::*;
 use self::glfw::{Action, Key};
 
 mod core;
 use core::Application;
 
 fn main() {
-    let mut _application = Application::new(300, 300, "title", glfw::WindowMode::Windowed);
+    let mut _application = Application::new(600, 600, "OpenGL", glfw::WindowMode::Windowed);
     _application.run(render, handle_window_event);
 }
 
 fn render() {
-    
+    unsafe {
+        gl::ClearColor(0.2, 0.3, 0.3, 1.0);
+        gl::Clear(gl::COLOR_BUFFER_BIT);
+    }
 }
 
 

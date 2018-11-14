@@ -5,3 +5,4 @@ authors = ["Matthew J. Berger <matthewberger@nevada.unr.edu>"]
 
 [dependencies]
 glfw = "0.25.0"
+gl = "0.6.0"

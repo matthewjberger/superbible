@@ -1,6 +1,7 @@
+extern crate gl;
 extern crate glfw;
-use self::glfw::{Action, Context, Key};
 
+use self::glfw::{Action, Context, Key};
 use std::sync::mpsc::Receiver;
 
 pub struct Application {
@@ -14,8 +15,12 @@ impl Application {
         let context = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
         let (mut window, events) = context.create_window(width, height, title, window_mode)
             .expect("Failed to create GLFW window.");
-        window.set_key_polling(true);
+
         window.make_current();
+        window.set_key_polling(true);
+        window.set_framebuffer_size_polling(true);
+
+        gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
         Application {
             window: window,
@@ -36,7 +41,9 @@ impl Application {
                 }
                 handle_window_event(&mut self.window, event)
             }
+            render();
+            self.window.swap_buffers();
         }
-        render();
+
     }
 }

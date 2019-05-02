@@ -40,3 +40,7 @@ path = "src/06_tessellatedtriangle.rs"
 [[bin]]
 name = "geometry-shader"
 path = "src/07_geometryshader.rs"
+
+[[bin]]
+name = "fragment-shader"
+path = "src/08_fragmentshader.rs"

@@ -4,20 +4,22 @@ use std::ffi::CString;
 use std::ptr;
 
 static VERTEX_SHADER_SOURCE: &'static str = "
-#version 450 core
+#version 420 core
 void main(void) {
     gl_Position = vec4(0.0, 0.0, 0.5, 1.0);
 }
 ";
 
 static FRAGMENT_SHADER_SOURCE: &'static str = "
-#version 450 core
+#version 420 core
 out vec4 color;
 void main(void)
 {
     color = vec4(0.0, 0.8, 1.0, 1.0);
 }
 ";
+
+static RED: &'static [GLfloat; 4] = &[1.0, 0.0, 0.0, 1.0];
 
 fn main() {
     let mut context = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
@@ -31,6 +33,15 @@ fn main() {
 
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
+    let shader_program = compile_shaders();
+
+    let mut vao = 0;
+
+    unsafe {
+        gl::CreateVertexArrays(1, &mut vao);
+        gl::BindVertexArray(vao);
+    }
+
     while !window.should_close() {
         context.poll_events();
         for (_, event) in glfw::flush_messages(&events) {
@@ -39,17 +50,17 @@ fn main() {
             }
             handle_window_event(&mut window, event)
         }
-        render();
+        render(shader_program);
         window.swap_buffers();
     }
 }
 
-fn render() {
+fn render(shader_program: u32) {
     unsafe {
-        gl::ClearColor(0.2, 0.3, 0.3, 1.0);
-        // gl::Clear(gl::COLOR_BUFFER_BIT);
-        let red: [GLfloat; 4] = [1.0, 0.0, 0.0, 0.0];
-        gl::ClearBufferfv(gl::COLOR, 0, &red as *const f32);
+        gl::ClearBufferfv(gl::COLOR, 0, RED as *const f32);
+        gl::UseProgram(shader_program);
+        gl::PointSize(40.0);
+        gl::DrawArrays(gl::POINTS, 0, 1);
     }
 }
 
@@ -64,13 +75,14 @@ fn compile_shaders() -> GLuint {
     let fragment_shader;
     let shader_program;
 
+    let vertex_src_str = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
+    let fragment_src_str = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
+
     unsafe {
-        let vertex_src_str = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
         vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
         gl::ShaderSource(vertex_shader, 1, &vertex_src_str.as_ptr(), ptr::null());
         gl::CompileShader(vertex_shader);
 
-        let fragment_src_str = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
         fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
         gl::ShaderSource(fragment_shader, 1, &fragment_src_str.as_ptr(), ptr::null());
         gl::CompileShader(fragment_shader);
@@ -82,7 +94,7 @@ fn compile_shaders() -> GLuint {
 
         gl::DeleteShader(vertex_shader);
         gl::DeleteShader(fragment_shader);
-
-        shader_program
     }
+
+    shader_program
 }

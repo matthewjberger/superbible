@@ -7,3 +7,15 @@ edition = "2018"
 [dependencies]
 glfw = "0.28.0"
 gl = "0.12.0"
+
+[[bin]]
+name = "solid-red"
+path = "src/00_solidred.rs"
+
+[[bin]]
+name = "colors"
+path = "src/01_colors.rs"
+
+[[bin]]
+name = "point"
+path = "src/02_point.rs"

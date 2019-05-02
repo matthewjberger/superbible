@@ -35,3 +35,8 @@ path = "src/05_coloredtriangle.rs"
 [[bin]]
 name = "tessellated-triangle"
 path = "src/06_tessellatedtriangle.rs"
+
+
+[[bin]]
+name = "geometry-shader"
+path = "src/07_geometryshader.rs"

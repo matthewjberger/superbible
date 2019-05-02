@@ -44,3 +44,7 @@ path = "src/07_geometryshader.rs"
 [[bin]]
 name = "fragment-shader"
 path = "src/08_fragmentshader.rs"
+
+[[bin]]
+name = "interpolation"
+path = "src/09_interpolation.rs"

@@ -5,23 +5,30 @@ use std::ptr;
 
 static VERTEX_SHADER_SOURCE: &'static str = "
 #version 450 core
+
+out vec4 vs_color;
+
 void main(void) {
     const vec4 vertices[3] = vec4[3](vec4( 0.25, -0.25, 0.5, 1.0),
                                      vec4(-0.25, -0.25, 0.5, 1.0),
                                      vec4( 0.25,  0.25, 0.5, 1.0));
+
+    const vec4 colors[3] = vec4[3](vec4(1.0, 0.0, 0.0, 1.0),
+                                  vec4(0.0, 1.0, 0.0, 1.0),
+                                  vec4(0.0, 0.0, 1.0, 1.0));
+
     gl_Position = vertices[gl_VertexID];
+    vs_color = colors[gl_VertexID];
 }
 ";
 
 static FRAGMENT_SHADER_SOURCE: &'static str = "
 #version 450 core
+in vec4 vs_color;
 out vec4 color;
 void main(void)
 {
-    color = vec4(sin(gl_FragCoord.x * 0.25) * 0.5 + 0.5,
-                 cos(gl_FragCoord.y * 0.25) * 0.5 + 0.5,
-                 sin(gl_FragCoord.x * 0.15) * cos(gl_FragCoord.y * 0.15),
-                 1.0);
+    color = vs_color;
 }
 ";
 
@@ -30,7 +37,7 @@ static BACKGROUND_COLOR: &'static [GLfloat; 4] = &[0.0, 0.25, 0.0, 1.0];
 fn main() {
     let mut context = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     let (mut window, events) = context
-        .create_window(600, 600, "Fragment Shader", glfw::WindowMode::Windowed)
+        .create_window(600, 600, "Interpolation", glfw::WindowMode::Windowed)
         .expect("Failed to create GLFW window.");
 
     window.make_current();

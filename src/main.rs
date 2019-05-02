@@ -1,15 +1,7 @@
-extern crate gl;
-extern crate glfw;
-
-use self::gl::types::*;
-use self::glfw::{Action, Key};
-
-use std::ptr;
+use gl::types::*;
+use glfw::{Action, Context, Key};
 use std::ffi::CString;
-
-mod core;
-use core::Application;
-
+use std::ptr;
 
 static VERTEX_SHADER_SOURCE: &'static str = "
 #version 450 core
@@ -28,31 +20,46 @@ void main(void)
 ";
 
 fn main() {
-    let mut _application = Application::new(600, 600, "OpenGL", glfw::WindowMode::Windowed);
-    _application.run(render, handle_window_event);
+    let mut context = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
+    let (mut window, events) = context
+        .create_window(600, 600, "OpenGL", glfw::WindowMode::Windowed)
+        .expect("Failed to create GLFW window.");
+
+    window.make_current();
+    window.set_key_polling(true);
+    window.set_framebuffer_size_polling(true);
+
+    gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
+
+    while !window.should_close() {
+        context.poll_events();
+        for (_, event) in glfw::flush_messages(&events) {
+            if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
+                window.set_should_close(true)
+            }
+            handle_window_event(&mut window, event)
+        }
+        render();
+        window.swap_buffers();
+    }
 }
 
 fn render() {
     unsafe {
         gl::ClearColor(0.2, 0.3, 0.3, 1.0);
         // gl::Clear(gl::COLOR_BUFFER_BIT);
-        let red: [GLfloat;4] = [1.0, 0.0, 0.0, 0.0];
+        let red: [GLfloat; 4] = [1.0, 0.0, 0.0, 0.0];
         gl::ClearBufferfv(gl::COLOR, 0, &red as *const f32);
     }
 }
 
-
 fn handle_window_event(window: &mut glfw::Window, event: glfw::WindowEvent) {
-    match event {
-        glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-            window.set_should_close(true)
-        }
-        _ => {}
+    if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
+        window.set_should_close(true)
     }
 }
 
-fn compile_shaders() -> GLuint
-{
+fn compile_shaders() -> GLuint {
     let vertex_shader;
     let fragment_shader;
     let shader_program;

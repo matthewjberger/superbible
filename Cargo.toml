@@ -2,7 +2,8 @@
 name = "superbible"
 version = "0.1.0"
 authors = ["Matthew J. Berger <matthewberger@nevada.unr.edu>"]
+edition = "2018"
 
 [dependencies]
-glfw = "0.25.0"
-gl = "0.11.0"
+glfw = "0.28.0"
+gl = "0.12.0"

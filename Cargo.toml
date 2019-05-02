@@ -19,3 +19,7 @@ path = "src/01_colors.rs"
 [[bin]]
 name = "point"
 path = "src/02_point.rs"
+
+[[bin]]
+name = "triangle"
+path = "src/03_triangle.rs"

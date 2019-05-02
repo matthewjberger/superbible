@@ -48,7 +48,6 @@ fn main() {
             if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
                 window.set_should_close(true)
             }
-            handle_window_event(&mut window, event)
         }
         render(shader_program);
         window.swap_buffers();
@@ -61,12 +60,6 @@ fn render(shader_program: u32) {
         gl::UseProgram(shader_program);
         gl::PointSize(40.0);
         gl::DrawArrays(gl::POINTS, 0, 1);
-    }
-}
-
-fn handle_window_event(window: &mut glfw::Window, event: glfw::WindowEvent) {
-    if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
-        window.set_should_close(true)
     }
 }
 

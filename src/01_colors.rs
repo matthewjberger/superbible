@@ -22,7 +22,6 @@ fn main() {
             if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
                 window.set_should_close(true)
             }
-            handle_window_event(&mut window, event)
         }
         render(start_time);
         window.swap_buffers();
@@ -42,11 +41,5 @@ fn render(start_time: SystemTime) {
 
     unsafe {
         gl::ClearBufferfv(gl::COLOR, 0, &color as *const f32);
-    }
-}
-
-fn handle_window_event(window: &mut glfw::Window, event: glfw::WindowEvent) {
-    if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
-        window.set_should_close(true)
     }
 }

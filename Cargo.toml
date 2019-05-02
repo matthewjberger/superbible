@@ -33,5 +33,5 @@ name = "colored-triangle"
 path = "src/05_coloredtriangle.rs"
 
 [[bin]]
-name = "tesselated-triangle"
-path = "src/06_tesselatedtriangle.rs"
+name = "tessellated-triangle"
+path = "src/06_tessellatedtriangle.rs"

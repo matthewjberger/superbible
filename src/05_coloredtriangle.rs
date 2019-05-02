@@ -70,7 +70,6 @@ fn main() {
             if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
                 window.set_should_close(true)
             }
-            handle_window_event(&mut window, event)
         }
         render(start_time, shader_program);
         window.swap_buffers();
@@ -101,12 +100,6 @@ fn render(start_time: SystemTime, shader_program: u32) {
         gl::VertexAttrib4fv(0, &offset as *const f32);
         gl::VertexAttrib4fv(1, &triangle_color as *const f32);
         gl::DrawArrays(gl::TRIANGLES, 0, 3);
-    }
-}
-
-fn handle_window_event(window: &mut glfw::Window, event: glfw::WindowEvent) {
-    if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
-        window.set_should_close(true)
     }
 }
 

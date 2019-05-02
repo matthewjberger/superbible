@@ -66,12 +66,12 @@ fn render(shader_program: u32) {
 }
 
 fn compile_shaders() -> GLuint {
+    let vertex_src_str = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
+    let fragment_src_str = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
+
     let vertex_shader;
     let fragment_shader;
     let shader_program;
-
-    let vertex_src_str = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
-    let fragment_src_str = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
 
     unsafe {
         vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);

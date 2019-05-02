@@ -24,7 +24,7 @@ static RED: &'static [GLfloat; 4] = &[1.0, 0.0, 0.0, 1.0];
 fn main() {
     let mut context = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     let (mut window, events) = context
-        .create_window(600, 600, "OpenGL", glfw::WindowMode::Windowed)
+        .create_window(600, 600, "Single Point", glfw::WindowMode::Windowed)
         .expect("Failed to create GLFW window.");
 
     window.make_current();

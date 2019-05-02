@@ -23,3 +23,7 @@ path = "src/02_point.rs"
 [[bin]]
 name = "triangle"
 path = "src/03_triangle.rs"
+
+[[bin]]
+name = "moving-triangle"
+path = "src/04_movingtriangle.rs"

@@ -5,7 +5,7 @@ use std::time::SystemTime;
 fn main() {
     let mut context = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     let (mut window, events) = context
-        .create_window(600, 600, "OpenGL", glfw::WindowMode::Windowed)
+        .create_window(600, 600, "Fading Colors", glfw::WindowMode::Windowed)
         .expect("Failed to create GLFW window.");
 
     window.make_current();
@@ -24,12 +24,12 @@ fn main() {
             }
             handle_window_event(&mut window, event)
         }
-        render(&start_time);
+        render(start_time);
         window.swap_buffers();
     }
 }
 
-fn render(start_time: &SystemTime) {
+fn render(start_time: SystemTime) {
     let elapsed_time = start_time.elapsed().unwrap();
     let current_time = elapsed_time.as_secs() as f32 + elapsed_time.subsec_nanos() as f32 * 1e-9;
 

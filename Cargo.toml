@@ -31,3 +31,7 @@ path = "src/04_movingtriangle.rs"
 [[bin]]
 name = "colored-triangle"
 path = "src/05_coloredtriangle.rs"
+
+[[bin]]
+name = "tesselated-triangle"
+path = "src/06_tesselatedtriangle.rs"

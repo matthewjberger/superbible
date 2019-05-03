@@ -8,6 +8,10 @@ edition = "2018"
 glfw = "0.28.0"
 gl = "0.12.0"
 
+[dependencies.cgmath]
+version = "0.17.0"
+features = ["swizzle"]
+
 [[bin]]
 name = "solid-red"
 path = "src/00_solidred.rs"
@@ -48,3 +52,7 @@ path = "src/08_fragmentshader.rs"
 [[bin]]
 name = "interpolation"
 path = "src/09_interpolation.rs"
+
+[[bin]]
+name = "spinny-cube"
+path = "src/10_spinnycube.rs"

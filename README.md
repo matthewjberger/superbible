@@ -3,6 +3,18 @@
 This is my repository for keeping the OpenGL examples as I work through 
 the OpenGL Superbible's 7th edition in rust.
 
+- Example Images
+    - [Solid Red](#solid-red)
+    - [Colors](#colors)
+    - [Point](#point)
+    - [Triangle](#triangle)
+    - [Moving Triangle](#moving-triangle)
+    - [Colored Triangle](#colored-triangle)
+    - [Tessellated Triangle](#tessellated-triangle)
+    - [Geometry Shader](#geometry-shader)
+    - [Fragment Shader](#fragment-shader)
+    - [Interpolation](#interpolation)
+
 ## Instructions
 
 To run any of the programs:

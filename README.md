@@ -33,7 +33,7 @@ To run any of the programs:
 
 ### Colored Triangle 
 
-![Colored Triangle](images/05_coloredtriangle.png)
+![Colored Triangle](images/05_coloredtriangle.gif)
 
 ### Tessellated Triangle 
 

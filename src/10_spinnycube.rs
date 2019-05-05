@@ -1,8 +1,11 @@
-use cgmath::{perspective, Deg, Matrix, Vector3};
+use cgmath::prelude::*;
+use cgmath::{perspective, vec3, Deg, Matrix, Matrix4};
 use gl::types::*;
 use glfw::{Action, Context, Key};
-use std::time::SystemTime;
-use std::{ffi::CString, mem, os::raw::c_void, ptr};
+use std::{ffi::CString, mem, ptr};
+
+const SCREEN_WIDTH: u32 = 600;
+const SCREEN_HEIGHT: u32 = 600;
 
 static VERTEX_SHADER_SOURCE: &'static str = "
 #version 450 core
@@ -94,16 +97,13 @@ static VERTEX_POSITIONS: &'static [GLfloat; 108] =
             -0.25,  0.25, -0.25
         ];
 
-const SCREEN_WIDTH: u32 = 600;
-const SCREEN_HEIGHT: u32 = 600;
-
 fn main() {
     let mut context = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     let (mut window, events) = context
         .create_window(
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
-            "Interpolation",
+            "Spinny Cube",
             glfw::WindowMode::Windowed,
         )
         .expect("Failed to create GLFW window.");
@@ -114,14 +114,12 @@ fn main() {
 
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let start_time = SystemTime::now();
-
     let shader_program = compile_shaders();
 
     let (mut vao, mut vbo) = (0, 0);
 
     unsafe {
-        gl::CreateVertexArrays(1, &mut vao);
+        gl::GenVertexArrays(1, &mut vao);
         gl::BindVertexArray(vao);
 
         gl::GenBuffers(1, &mut vbo);
@@ -129,7 +127,7 @@ fn main() {
         gl::BufferData(
             gl::ARRAY_BUFFER,
             (VERTEX_POSITIONS.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-            &VERTEX_POSITIONS[0] as *const f32 as *const c_void,
+            VERTEX_POSITIONS.as_ptr() as *const gl::types::GLvoid,
             gl::STATIC_DRAW,
         );
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 0, ptr::null());
@@ -137,29 +135,43 @@ fn main() {
 
         gl::Enable(gl::CULL_FACE);
         gl::FrontFace(gl::CW);
+
+        gl::Enable(gl::DEPTH_TEST);
+        gl::DepthFunc(gl::LEQUAL);
     }
+
+    let mut aspect_ratio: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
 
     while !window.should_close() {
         context.poll_events();
         for (_, event) in glfw::flush_messages(&events) {
-            if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
-                window.set_should_close(true)
+            match event {
+                glfw::WindowEvent::FramebufferSize(width, height) => unsafe {
+                    aspect_ratio = width as f32 / height as f32;
+                    gl::Viewport(0, 0, width, height)
+                },
+                glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
+                    window.set_should_close(true)
+                }
+                _ => {}
             }
         }
-        render(start_time, shader_program);
+
+        let projection = perspective(Deg(45.0), aspect_ratio, 0.1 as f32, 100 as f32);
+
+        render(projection, context.get_time() as f32, shader_program);
         window.swap_buffers();
     }
 }
 
-fn render(start_time: SystemTime, shader_program: u32) {
-    let elapsed_time = start_time.elapsed().unwrap();
-    let current_time = elapsed_time.as_secs() as f32 + elapsed_time.subsec_nanos() as f32 * 1e-9;
-
+fn render(projection: Matrix4<f32>, current_time: f32, shader_program: u32) {
     unsafe {
-        gl::Viewport(0, 0, SCREEN_WIDTH as i32, SCREEN_HEIGHT as i32);
-
         gl::ClearBufferfv(gl::COLOR, 0, &BACKGROUND_COLOR as *const f32);
-        gl::ClearBufferfv(gl::DEPTH, 0, 1 as *const f32);
+
+        // This is the line from the book, but it seems to crash the program...
+        // gl::ClearBufferfv(gl::DEPTH, 0, 1 as *const f32);
+
+        gl::Clear(gl::DEPTH_BUFFER_BIT);
 
         gl::UseProgram(shader_program);
 
@@ -172,20 +184,31 @@ fn render(start_time: SystemTime, shader_program: u32) {
         let projection_matrix_location =
             gl::GetUniformLocation(shader_program, projection_matrix_str.as_ptr());
 
-        let model = perspective(
-            Deg(45.0),
-            SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32,
-            0.1 as f32,
-            100 as f32,
+        gl::UniformMatrix4fv(
+            projection_matrix_location,
+            1,
+            gl::FALSE,
+            projection.as_ptr(),
         );
 
-        gl::UniformMatrix4fv(projection_matrix_location, 1, gl::FALSE, model.as_ptr());
+        let factor: f32 = current_time * 0.3;
 
-        // TODO: Complete this. Build the model and view matrices and multiply them to get the modelview matrix.
-        //       Then assign it to the uniform
-        // let model =
-        //     Matrix4::from_translation(Vector3::new(0.0, 0.0, -6.0)) *
-        //     Matrix4::from_
+        let modelview = Matrix4::from_translation(vec3(0.0, 0.0, -4.0))
+            * Matrix4::from_axis_angle(
+                vec3(0.0, 1.0, 0.0).normalize(),
+                Deg(current_time * 45 as f32),
+            )
+            * Matrix4::from_axis_angle(
+                vec3(1.0, 0.0, 0.0).normalize(),
+                Deg(current_time * 21 as f32),
+            )
+            * Matrix4::from_translation(vec3(
+                (2.1 * factor).sin() * 0.5,
+                (1.7 * factor).cos() * 0.5,
+                (1.3 * factor).sin() * (1.5 * factor).cos() * 2.0,
+            ));
+
+        gl::UniformMatrix4fv(modelview_matrix_location, 1, gl::FALSE, modelview.as_ptr());
 
         gl::DrawArrays(gl::TRIANGLES, 0, 36);
     }

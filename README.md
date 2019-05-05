@@ -14,6 +14,7 @@ the OpenGL Superbible's 7th edition in rust.
     - [Geometry Shader](#geometry-shader)
     - [Fragment Shader](#fragment-shader)
     - [Interpolation](#interpolation)
+    - [Spinny Cube](#spinny-cube)
 
 ## Instructions
 
@@ -62,3 +63,8 @@ To run any of the programs:
 ### Interpolation
 
 ![Interpolation](images/09_interpolation.png)
+
+### Spinny Cube
+
+![Spinny Cube](images/10_spinnycube.gif)
+

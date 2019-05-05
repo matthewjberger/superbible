@@ -56,3 +56,7 @@ path = "src/09_interpolation.rs"
 [[bin]]
 name = "spinny-cube"
 path = "src/10_spinnycube.rs"
+
+[[bin]]
+name = "spinny-cubes"
+path = "src/11_spinnycubes.rs"

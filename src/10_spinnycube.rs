@@ -157,7 +157,7 @@ fn main() {
             }
         }
 
-        let projection = perspective(Deg(45.0), aspect_ratio, 0.1 as f32, 100 as f32);
+        let projection = perspective(Deg(50.0), aspect_ratio, 0.1 as f32, 1000 as f32);
 
         render(projection, context.get_time() as f32, shader_program);
         window.swap_buffers();

@@ -71,5 +71,5 @@ To run any of the programs:
 
 ### Spinny Cubes
 
-![Spinny Cubes](images/10_spinnycubes.gif)
+![Spinny Cubes](images/11_spinnycubes.gif)
 

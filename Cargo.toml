@@ -60,3 +60,7 @@ path = "src/10_spinnycube.rs"
 [[bin]]
 name = "spinny-cubes"
 path = "src/11_spinnycubes.rs"
+
+[[bin]]
+name = "textured-triangle"
+path = "src/12_texturedtriangle.rs"

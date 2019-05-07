@@ -16,6 +16,7 @@ the OpenGL Superbible's 7th edition in rust.
     - [Interpolation](#interpolation)
     - [Spinny Cube](#spinny-cube)
     - [Spinny Cubes](#spinny-cubes)
+    - [Textured Triangle](#textured-triangle)
 
 ## Instructions
 
@@ -73,3 +74,6 @@ To run any of the programs:
 
 ![Spinny Cubes](images/11_spinnycubes.gif)
 
+### Textured Triangle
+
+![Textured Triangle](images/12_texturedtriangle.png)

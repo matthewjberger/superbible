@@ -119,7 +119,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "ktx"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "byteorder 1.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -332,7 +332,7 @@ dependencies = [
  "cgmath 0.17.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "gl 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "glfw 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "ktx 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ktx 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -376,7 +376,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum glfw 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a66b83f216b28baf62a32501473fa2334bdc9bcf679c2c01c1a975ae6686709f"
 "checksum glfw-sys 3.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f18d2cf180dd18d06142b26758d32aeb6c71ba0a37c7f3ddafee22b8a3247cd3"
 "checksum khronos_api 3.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
-"checksum ktx 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "449e4d2a0fd626ecff306a9b30b84d8356468c49650e90b4ce7670eeee767498"
+"checksum ktx 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "06e6e58c771db3a45ab5b4b21d75d44ba4cf29ea283f09460b56fb66265f9680"
 "checksum libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)" = "76e3a3ef172f1a0b9a9ff0dd1491ae5e6c948b94479a3021819ba7d860c8645d"
 "checksum log 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)" = "c84ec4b527950aa83a329754b01dbe3f58361d1c5efacd1f6d68c494d08a17c6"
 "checksum nom 1.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "a5b8c256fd9471521bcb84c3cdba98921497f1a331cbc15b8030fc63b82050ce"

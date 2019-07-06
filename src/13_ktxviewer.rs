@@ -1,9 +1,9 @@
+mod support;
+use support::*;
+
 use gl::types::*;
 use glfw::{Action, Context, Key};
-use ktx::*;
 use std::ffi::CString;
-use std::fs::File;
-use std::io::Read;
 use std::ptr;
 
 static VERTEX_SHADER_SOURCE: &'static str = "
@@ -50,16 +50,9 @@ fn main() {
     let mut texture = 0;
 
     // Load a texture
-    let ktx = include_ktx!("../assets/textures/tree.ktx");
-    // let image = ktx.texture_level(0);
-
-    // Read in the pixels manually
-    // because the ktx library doesn't appear to be loading the pixels correctly at the moment
-    let mut f = File::open("../assets/textures/tree.ktx").unwrap();
-    let mut buffer = vec![0; 64];
-    f.read_exact(&mut buffer).unwrap();
-    let mut image = Vec::new();
-    f.read_to_end(&mut image).unwrap();
+    let (_, data) = load_ktx!("../assets/textures/treelights_2k.ktx").unwrap();
+    let ktx = data.header;
+    let image = data.pixels;
 
     unsafe {
         gl::GenTextures(1, &mut texture);
@@ -67,10 +60,10 @@ fn main() {
 
         gl::TexStorage2D(
             gl::TEXTURE_2D,
-            ktx.mipmap_levels() as i32,
-            ktx.gl_internal_format(),
-            ktx.pixel_width() as i32,
-            ktx.pixel_height() as i32,
+            ktx.mip_levels as i32,
+            ktx.gl_internal_format,
+            ktx.pixel_width as i32,
+            ktx.pixel_height as i32,
         );
 
         gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
@@ -80,14 +73,14 @@ fn main() {
             0,
             0,
             0,
-            ktx.pixel_width() as i32,
-            ktx.pixel_height() as i32,
-            ktx.gl_format(),
-            ktx.gl_type(),
+            ktx.pixel_width as i32,
+            ktx.pixel_height as i32,
+            ktx.gl_format,
+            ktx.gl_type,
             image.as_ptr() as *const GLvoid,
         );
 
-        gl::Viewport(0, 0, ktx.pixel_width() as i32, ktx.pixel_height() as i32);
+        gl::Viewport(0, 0, ktx.pixel_width as i32, ktx.pixel_height as i32);
 
         gl::GenVertexArrays(1, &mut vao);
         gl::BindVertexArray(vao);

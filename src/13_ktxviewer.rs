@@ -50,7 +50,7 @@ fn main() {
     let mut texture = 0;
 
     // Load a texture
-    let (_, data) = load_ktx!("../assets/textures/treelights_2k.ktx").unwrap();
+    let (_, data) = load_ktx!("../assets/textures/tree.ktx").unwrap();
     let ktx = data.header;
     let image = data.pixels;
 

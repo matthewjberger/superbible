@@ -17,6 +17,7 @@ the OpenGL Superbible's 7th edition in rust.
     - [Spinny Cube](#spinny-cube)
     - [Spinny Cubes](#spinny-cubes)
     - [Textured Triangle](#textured-triangle)
+    - [KTX Viewer](#ktx-viewer)
 
 ## Instructions
 
@@ -77,3 +78,10 @@ To run any of the programs:
 ### Textured Triangle
 
 ![Textured Triangle](images/12_texturedtriangle.png)
+
+
+### KTX Viewer
+
+![KTX Viewer](images/13_ktxviewer.gif)
+
+> This gif has artifacts from the method used to generate it but you get the idea.

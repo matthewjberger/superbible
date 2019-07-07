@@ -3,8 +3,7 @@ use support::*;
 
 use gl::types::*;
 use glfw::{Action, Context, Key};
-use std::ffi::CString;
-use std::ptr;
+use std::{ffi::CString, ptr};
 
 static VERTEX_SHADER_SOURCE: &'static str = "
 #version 450 core

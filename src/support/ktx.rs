@@ -50,7 +50,7 @@ pub fn parse_ktx<'a>(input: &'a [u8]) -> IResult<&'a [u8], KtxData> {
             le_u32(input)
         }
     };
-    let (input, members) = count(take_endian, 13usize)(input)?;
+    let (input, members) = count(take_endian, 12usize)(input)?;
     let mut member_iter = members.iter();
 
     let (input, pixels) = rest(input)?;

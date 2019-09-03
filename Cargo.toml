@@ -69,3 +69,7 @@ path = "src/12_texturedtriangle.rs"
 [[bin]]
 name = "ktx-viewer"
 path = "src/13_ktxviewer.rs"
+
+[[bin]]
+name = "texture-coordinates"
+path = "src/14_texturecoordinates.rs"

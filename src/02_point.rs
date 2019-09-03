@@ -36,14 +36,8 @@ impl DemoApp {
             ..Default::default()
         }
     }
-}
 
-impl App for DemoApp {
-    fn settings(&mut self) -> &AppSettings {
-        &self.settings
-    }
-
-    fn initialize(&mut self) {
+    fn load_shaders(&mut self) {
         let mut vertex_shader = Shader::new(ShaderType::Vertex);
         vertex_shader.load(VERTEX_SHADER_SOURCE);
 
@@ -55,7 +49,16 @@ impl App for DemoApp {
             .attach(vertex_shader)
             .attach(fragment_shader)
             .link();
+    }
+}
 
+impl App for DemoApp {
+    fn settings(&mut self) -> &AppSettings {
+        &self.settings
+    }
+
+    fn initialize(&mut self) {
+        self.load_shaders();
         unsafe {
             gl::CreateVertexArrays(1, &mut self.vao);
             gl::BindVertexArray(self.vao);
@@ -63,9 +66,9 @@ impl App for DemoApp {
     }
 
     fn render(&mut self, _: f32) {
+        self.shader_program.activate();
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, RED as *const f32);
-            gl::UseProgram(self.shader_program.id);
             gl::PointSize(40.0);
             gl::DrawArrays(gl::POINTS, 0, 1);
         }

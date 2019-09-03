@@ -1,9 +1,7 @@
-use gl::types::*;
-use glfw::{Action, Context, Key};
-use std::ffi::CString;
-use std::ptr;
+use support::app::*;
+use support::shader::*;
 
-static VERTEX_SHADER_SOURCE: &'static str = "
+static VERTEX_SHADER_SOURCE: &str = "
 #version 450 core
 
 layout (location = 0) in vec4 offset;
@@ -24,7 +22,7 @@ void main(void)
 }
 ";
 
-static FRAGMENT_SHADER_SOURCE: &'static str = "
+static FRAGMENT_SHADER_SOURCE: &str = "
 #version 450 core
 
 in VS_OUT
@@ -40,89 +38,79 @@ void main(void)
 }
 ";
 
-fn main() {
-    let mut context = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-    let (mut window, events) = context
-        .create_window(600, 600, "Colored Triangle", glfw::WindowMode::Windowed)
-        .expect("Failed to create GLFW window.");
+#[derive(Default)]
+struct DemoApp {
+    settings: AppSettings,
+    shader_program: ShaderProgram,
+    vao: u32,
+}
 
-    window.make_current();
-    window.set_key_polling(true);
-    window.set_framebuffer_size_polling(true);
-
-    gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
-
-    let shader_program = compile_shaders();
-
-    let mut vao = 0;
-
-    unsafe {
-        gl::CreateVertexArrays(1, &mut vao);
-        gl::BindVertexArray(vao);
-    }
-
-    while !window.should_close() {
-        context.poll_events();
-        for (_, event) in glfw::flush_messages(&events) {
-            if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
-                window.set_should_close(true)
-            }
+impl DemoApp {
+    pub fn new() -> DemoApp {
+        DemoApp {
+            settings: AppSettings {
+                title: "Colored Triangle".to_string(),
+                ..Default::default()
+            },
+            ..Default::default()
         }
-        render(context.get_time() as f32, shader_program);
-        window.swap_buffers();
+    }
+
+    fn load_shaders(&mut self) {
+        let mut vertex_shader = Shader::new(ShaderType::Vertex);
+        vertex_shader.load(VERTEX_SHADER_SOURCE);
+
+        let mut fragment_shader = Shader::new(ShaderType::Fragment);
+        fragment_shader.load(FRAGMENT_SHADER_SOURCE);
+
+        self.shader_program = ShaderProgram::new();
+        self.shader_program
+            .attach(vertex_shader)
+            .attach(fragment_shader)
+            .link();
     }
 }
 
-fn render(current_time: f32, shader_program: u32) {
-    let background_color: [GLfloat; 4] = [
-        (current_time.sin() * 0.5) + 0.5,
-        (current_time.cos() * 0.5) + 0.5,
-        0.0,
-        1.0,
-    ];
-    let triangle_color: [GLfloat; 4] = [
-        (current_time.sin() * 0.5) + 0.5,
-        (current_time.cos() * 0.5) + 0.5,
-        1.0,
-        1.0,
-    ];
+impl App for DemoApp {
+    fn settings(&mut self) -> &AppSettings {
+        &self.settings
+    }
 
-    let offset: [GLfloat; 4] = [current_time.sin() * 0.5, current_time.cos() * 0.6, 0.0, 0.0];
+    fn initialize(&mut self) {
+        self.load_shaders();
+        unsafe {
+            gl::CreateVertexArrays(1, &mut self.vao);
+            gl::BindVertexArray(self.vao);
+        }
+    }
 
-    unsafe {
-        gl::ClearBufferfv(gl::COLOR, 0, &background_color as *const f32);
-        gl::UseProgram(shader_program);
-        gl::VertexAttrib4fv(0, &offset as *const f32);
-        gl::VertexAttrib4fv(1, &triangle_color as *const f32);
-        gl::DrawArrays(gl::TRIANGLES, 0, 3);
+    fn render(&mut self, current_time: f32) {
+        let background_color: [GLfloat; 4] = [
+            (current_time.sin() * 0.5) + 0.5,
+            (current_time.cos() * 0.5) + 0.5,
+            0.0,
+            1.0,
+        ];
+
+        let triangle_color: [GLfloat; 4] = [
+            (current_time.sin() * 0.5) + 0.5,
+            (current_time.cos() * 0.5) + 0.5,
+            1.0,
+            1.0,
+        ];
+
+        let offset: [GLfloat; 4] = [current_time.sin() * 0.5, current_time.cos() * 0.6, 0.0, 0.0];
+
+        self.shader_program.activate();
+        unsafe {
+            gl::ClearBufferfv(gl::COLOR, 0, &background_color as *const f32);
+            gl::VertexAttrib4fv(0, &offset as *const f32);
+            gl::VertexAttrib4fv(1, &triangle_color as *const f32);
+            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+        }
     }
 }
 
-fn compile_shaders() -> GLuint {
-    let vertex_src_str = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
-    let fragment_src_str = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
-
-    let vertex_shader;
-    let fragment_shader;
-    let shader_program;
-
-    unsafe {
-        vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
-        gl::ShaderSource(vertex_shader, 1, &vertex_src_str.as_ptr(), ptr::null());
-        gl::CompileShader(vertex_shader);
-
-        fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
-        gl::ShaderSource(fragment_shader, 1, &fragment_src_str.as_ptr(), ptr::null());
-        gl::CompileShader(fragment_shader);
-
-        shader_program = gl::CreateProgram();
-        gl::AttachShader(shader_program, vertex_shader);
-        gl::AttachShader(shader_program, fragment_shader);
-        gl::LinkProgram(shader_program);
-
-        gl::DeleteShader(vertex_shader);
-        gl::DeleteShader(fragment_shader);
-    }
-
-    shader_program
+fn main() {
+    run(&mut DemoApp::new());
 }

@@ -1,9 +1,7 @@
-use gl::types::*;
-use glfw::{Action, Context, Key};
-use std::ffi::CString;
-use std::ptr;
+use support::app::*;
+use support::shader::*;
 
-static VERTEX_SHADER_SOURCE: &'static str = "
+static VERTEX_SHADER_SOURCE: &str = "
 #version 450 core
 
 void main(void)
@@ -16,7 +14,7 @@ void main(void)
 }
 ";
 
-static TESSELLATION_CONTROL_SHADER_SOURCE: &'static str = "
+static TESSELLATION_CONTROL_SHADER_SOURCE: &str = "
 #version 450 core
 
 layout (vertices = 3) out;
@@ -34,7 +32,7 @@ void main(void)
 }
 ";
 
-static TESSELLATION_EVALUATION_SHADER_SOURCE: &'static str = "
+static TESSELLATION_EVALUATION_SHADER_SOURCE: &str = "
 #version 450 core
 
 layout (triangles, equal_spacing, cw) in;
@@ -47,7 +45,7 @@ void main(void)
 }
 ";
 
-static GEOMETRY_SHADER_SOURCE: &'static str = "
+static GEOMETRY_SHADER_SOURCE: &str = "
 #version 450 core
 
 layout (triangles) in;
@@ -64,7 +62,7 @@ void main(void)
 }
 ";
 
-static FRAGMENT_SHADER_SOURCE: &'static str = "
+static FRAGMENT_SHADER_SOURCE: &str = "
 #version 450 core
 
 out vec4 color;
@@ -75,112 +73,76 @@ void main(void)
 }
 ";
 
-fn main() {
-    let mut context = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
+#[derive(Default)]
+struct DemoApp {
+    settings: AppSettings,
+    shader_program: ShaderProgram,
+    vao: u32,
+}
 
-    let (mut window, events) = context
-        .create_window(600, 600, "Geometry Shader", glfw::WindowMode::Windowed)
-        .expect("Failed to create GLFW window.");
-
-    window.make_current();
-    window.set_key_polling(true);
-    window.set_framebuffer_size_polling(true);
-
-    gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
-
-    let shader_program = compile_shaders();
-
-    let mut vao = 0;
-
-    unsafe {
-        gl::CreateVertexArrays(1, &mut vao);
-        gl::BindVertexArray(vao);
-        gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
-        gl::PointSize(5.0);
-    }
-
-    while !window.should_close() {
-        context.poll_events();
-        for (_, event) in glfw::flush_messages(&events) {
-            if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
-                window.set_should_close(true)
-            }
+impl DemoApp {
+    pub fn new() -> DemoApp {
+        DemoApp {
+            settings: AppSettings {
+                title: "Geometry Shader".to_string(),
+                ..Default::default()
+            },
+            ..Default::default()
         }
-        render(shader_program);
-        window.swap_buffers();
+    }
+
+    fn load_shaders(&mut self) {
+        let mut vertex_shader = Shader::new(ShaderType::Vertex);
+        vertex_shader.load(VERTEX_SHADER_SOURCE);
+
+        let mut tessellation_control_shader = Shader::new(ShaderType::TessellationControl);
+        tessellation_control_shader.load(TESSELLATION_CONTROL_SHADER_SOURCE);
+
+        let mut tessellation_evaluation_shader = Shader::new(ShaderType::TessellationEvaluation);
+        tessellation_evaluation_shader.load(TESSELLATION_EVALUATION_SHADER_SOURCE);
+
+        let mut geometry_shader = Shader::new(ShaderType::Geometry);
+        geometry_shader.load(GEOMETRY_SHADER_SOURCE);
+
+        let mut fragment_shader = Shader::new(ShaderType::Fragment);
+        fragment_shader.load(FRAGMENT_SHADER_SOURCE);
+
+        self.shader_program = ShaderProgram::new();
+        self.shader_program
+            .attach(vertex_shader)
+            .attach(tessellation_control_shader)
+            .attach(tessellation_evaluation_shader)
+            .attach(geometry_shader)
+            .attach(fragment_shader)
+            .link();
     }
 }
 
-fn render(shader_program: u32) {
-    let background_color: [GLfloat; 4] = [0.0, 0.25, 0.0, 1.0];
-    unsafe {
-        gl::ClearBufferfv(gl::COLOR, 0, &background_color as *const f32);
-        gl::UseProgram(shader_program);
-        gl::DrawArrays(gl::PATCHES, 0, 3);
+impl App for DemoApp {
+    fn settings(&mut self) -> &AppSettings {
+        &self.settings
+    }
+
+    fn initialize(&mut self) {
+        self.load_shaders();
+        unsafe {
+            gl::CreateVertexArrays(1, &mut self.vao);
+            gl::BindVertexArray(self.vao);
+            gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+            gl::PointSize(5.0);
+        }
+    }
+
+    fn render(&mut self, _: f32) {
+        let background_color: [GLfloat; 4] = [0.0, 0.0, 0.0, 1.0];
+        self.shader_program.activate();
+        unsafe {
+            gl::ClearBufferfv(gl::COLOR, 0, &background_color as *const f32);
+            gl::DrawArrays(gl::PATCHES, 0, 3);
+        }
     }
 }
 
-fn compile_shaders() -> GLuint {
-    let vertex_src_str = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
-    let fragment_src_str = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
-    let tessellation_control_src_str =
-        CString::new(TESSELLATION_CONTROL_SHADER_SOURCE.as_bytes()).unwrap();
-    let tessellation_evaluation_src_str =
-        CString::new(TESSELLATION_EVALUATION_SHADER_SOURCE.as_bytes()).unwrap();
-    let geometry_src_str = CString::new(GEOMETRY_SHADER_SOURCE.as_bytes()).unwrap();
-
-    let vertex_shader;
-    let fragment_shader;
-    let tessellation_control_shader;
-    let tessellation_evaluation_shader;
-    let geometry_shader;
-    let shader_program;
-
-    unsafe {
-        vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
-        gl::ShaderSource(vertex_shader, 1, &vertex_src_str.as_ptr(), ptr::null());
-        gl::CompileShader(vertex_shader);
-
-        tessellation_control_shader = gl::CreateShader(gl::TESS_CONTROL_SHADER);
-        gl::ShaderSource(
-            tessellation_control_shader,
-            1,
-            &tessellation_control_src_str.as_ptr(),
-            ptr::null(),
-        );
-        gl::CompileShader(tessellation_control_shader);
-
-        tessellation_evaluation_shader = gl::CreateShader(gl::TESS_EVALUATION_SHADER);
-        gl::ShaderSource(
-            tessellation_evaluation_shader,
-            1,
-            &tessellation_evaluation_src_str.as_ptr(),
-            ptr::null(),
-        );
-        gl::CompileShader(tessellation_evaluation_shader);
-
-        geometry_shader = gl::CreateShader(gl::GEOMETRY_SHADER);
-        gl::ShaderSource(geometry_shader, 1, &geometry_src_str.as_ptr(), ptr::null());
-        gl::CompileShader(geometry_shader);
-
-        fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
-        gl::ShaderSource(fragment_shader, 1, &fragment_src_str.as_ptr(), ptr::null());
-        gl::CompileShader(fragment_shader);
-
-        shader_program = gl::CreateProgram();
-        gl::AttachShader(shader_program, vertex_shader);
-        gl::AttachShader(shader_program, tessellation_control_shader);
-        gl::AttachShader(shader_program, tessellation_evaluation_shader);
-        gl::AttachShader(shader_program, geometry_shader);
-        gl::AttachShader(shader_program, fragment_shader);
-        gl::LinkProgram(shader_program);
-
-        gl::DeleteShader(vertex_shader);
-        gl::DeleteShader(tessellation_control_shader);
-        gl::DeleteShader(tessellation_evaluation_shader);
-        gl::DeleteShader(geometry_shader);
-        gl::DeleteShader(fragment_shader);
-    }
-
-    shader_program
+fn main() {
+    run(&mut DemoApp::new());
 }

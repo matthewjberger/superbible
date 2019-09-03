@@ -6,8 +6,8 @@ pub enum ShaderType {
     Vertex,
     Fragment,
     Geometry,
-    TesselationControl,
-    TesselationEvaluation,
+    TessellationControl,
+    TessellationEvaluation,
     Compute,
 }
 
@@ -36,8 +36,8 @@ impl Shader {
             ShaderType::Vertex => gl::VERTEX_SHADER,
             ShaderType::Fragment => gl::FRAGMENT_SHADER,
             ShaderType::Geometry => gl::GEOMETRY_SHADER,
-            ShaderType::TesselationControl => gl::TESS_CONTROL_SHADER,
-            ShaderType::TesselationEvaluation => gl::TESS_EVALUATION_SHADER,
+            ShaderType::TessellationControl => gl::TESS_CONTROL_SHADER,
+            ShaderType::TessellationEvaluation => gl::TESS_EVALUATION_SHADER,
             ShaderType::Compute => gl::COMPUTE_SHADER,
         }
     }
@@ -74,5 +74,16 @@ impl ShaderProgram {
         unsafe {
             gl::LinkProgram(self.id);
         }
+    }
+
+    pub fn activate(&self) {
+        unsafe {
+            gl::UseProgram(self.id);
+        }
+    }
+
+    pub fn uniform_location(&self, name: &str) -> GLint {
+        let name: CString = CString::new(name.as_bytes()).unwrap();
+        unsafe { gl::GetUniformLocation(self.id, name.as_ptr()) }
     }
 }

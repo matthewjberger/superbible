@@ -1,9 +1,8 @@
-use std::ffi::CString;
-use std::ptr;
 use support::app::*;
+use support::shader::*;
 
-static VERTEX_SHADER_SOURCE: &'static str = "
-#version 450 core
+static VERTEX_SHADER_SOURCE: &str = "
+#version 410 core
 void main(void) {
     const vec4 vertices[3] = vec4[3](vec4( 0.25, -0.25, 0.5, 1.0),
                                      vec4(-0.25, -0.25, 0.5, 1.0),
@@ -12,8 +11,8 @@ void main(void) {
 }
 ";
 
-static FRAGMENT_SHADER_SOURCE: &'static str = "
-#version 420 core
+static FRAGMENT_SHADER_SOURCE: &str = "
+#version 410 core
 out vec4 color;
 void main(void)
 {
@@ -21,12 +20,12 @@ void main(void)
 }
 ";
 
-static RED: &'static [GLfloat; 4] = &[1.0, 0.0, 0.0, 1.0];
+static RED: &[GLfloat; 4] = &[1.0, 0.0, 0.0, 1.0];
 
 #[derive(Default)]
 struct DemoApp {
     settings: AppSettings,
-    shader_program: u32,
+    shader_program: ShaderProgram,
     vao: u32,
 }
 
@@ -40,6 +39,20 @@ impl DemoApp {
             ..Default::default()
         }
     }
+
+    fn load_shaders(&mut self) {
+        let mut vertex_shader = Shader::new(ShaderType::Vertex);
+        vertex_shader.load(VERTEX_SHADER_SOURCE);
+
+        let mut fragment_shader = Shader::new(ShaderType::Fragment);
+        fragment_shader.load(FRAGMENT_SHADER_SOURCE);
+
+        self.shader_program = ShaderProgram::new();
+        self.shader_program
+            .attach(vertex_shader)
+            .attach(fragment_shader)
+            .link();
+    }
 }
 
 impl App for DemoApp {
@@ -48,8 +61,7 @@ impl App for DemoApp {
     }
 
     fn initialize(&mut self) {
-        self.shader_program = compile_shaders();
-
+        self.load_shaders();
         unsafe {
             gl::CreateVertexArrays(1, &mut self.vao);
             gl::BindVertexArray(self.vao);
@@ -57,41 +69,12 @@ impl App for DemoApp {
     }
 
     fn render(&mut self, _: f32) {
+        self.shader_program.activate();
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, RED as *const f32);
-            gl::UseProgram(self.shader_program);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
         }
     }
-}
-
-fn compile_shaders() -> GLuint {
-    let vertex_src_str = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
-    let fragment_src_str = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
-
-    let vertex_shader;
-    let fragment_shader;
-    let shader_program;
-
-    unsafe {
-        vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
-        gl::ShaderSource(vertex_shader, 1, &vertex_src_str.as_ptr(), ptr::null());
-        gl::CompileShader(vertex_shader);
-
-        fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
-        gl::ShaderSource(fragment_shader, 1, &fragment_src_str.as_ptr(), ptr::null());
-        gl::CompileShader(fragment_shader);
-
-        shader_program = gl::CreateProgram();
-        gl::AttachShader(shader_program, vertex_shader);
-        gl::AttachShader(shader_program, fragment_shader);
-        gl::LinkProgram(shader_program);
-
-        gl::DeleteShader(vertex_shader);
-        gl::DeleteShader(fragment_shader);
-    }
-
-    shader_program
 }
 
 fn main() {

@@ -55,7 +55,7 @@ pub fn run<T: App>(app: &mut T) {
                     window.set_should_close(true)
                 }
                 glfw::WindowEvent::Key(key, _, action, _) => app.on_key(key, action),
-                glfw::WindowEvent::Size(width, height) => {
+                glfw::WindowEvent::FramebufferSize(width, height) => {
                     unsafe {
                         gl::Viewport(0, 0, width, height);
                     }

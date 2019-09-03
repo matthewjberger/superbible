@@ -1,4 +1,3 @@
-mod support;
 use support::*;
 
 use gl::types::*;

@@ -4,3 +4,4 @@ extern crate nom;
 pub mod ktx;
 pub mod app;
 pub mod object;
+pub mod shader;

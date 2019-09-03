@@ -1,7 +1,4 @@
-mod support;
-// use support::*;
-
-use cgmath::{perspective, Deg};
+// use cgmath::{perspective, Deg};
 use gl::types::*;
 use glfw::{Action, Context, Key};
 use std::{ffi::CString, ptr};
@@ -108,7 +105,7 @@ fn main() {
     }
 
     let shader_program = compile_shaders();
-    let mut aspect_ratio: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
+    // let mut aspect_ratio: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
 
     // TODO: Make main app that can be run and overriden
     while !window.should_close() {
@@ -116,7 +113,7 @@ fn main() {
         for (_, event) in glfw::flush_messages(&events) {
             match event {
                 glfw::WindowEvent::FramebufferSize(width, height) => unsafe {
-                    aspect_ratio = width as f32 / height as f32;
+                    // aspect_ratio = width as f32 / height as f32;
                     gl::Viewport(0, 0, width, height)
                 },
                 glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
@@ -125,7 +122,7 @@ fn main() {
                 _ => {}
             }
 
-            let projection = perspective(Deg(50.0), aspect_ratio, 0.1 as f32, 1000 as f32);
+            // let projection = perspective(Deg(50.0), aspect_ratio, 0.1 as f32, 1000 as f32);
 
             // Get uniform locations
             // let mv_matrix = gl::GetUniformLocation(shader_program, "mv_matrix");
@@ -138,7 +135,7 @@ fn main() {
     }
 }
 
-fn render(current_time: f64, shader_program: u32, texture: u32) {
+fn render(_current_time: f64, shader_program: u32, texture: u32) {
     unsafe {
         gl::ClearBufferfv(gl::COLOR, 0, GRAY as *const f32);
         gl::ClearBufferfv(gl::DEPTH, 0, ONES as *const f32);

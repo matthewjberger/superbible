@@ -1,6 +1,5 @@
-use std::ffi::CString;
-use std::ptr;
 use support::app::*;
+use support::shader::*;
 
 static VERTEX_SHADER_SOURCE: &'static str = "
 #version 420 core
@@ -23,7 +22,7 @@ static RED: &'static [GLfloat; 4] = &[1.0, 0.0, 0.0, 1.0];
 #[derive(Default)]
 struct DemoApp {
     settings: AppSettings,
-    shader_program: u32,
+    shader_program: ShaderProgram,
     vao: u32,
 }
 
@@ -45,7 +44,17 @@ impl App for DemoApp {
     }
 
     fn initialize(&mut self) {
-        self.shader_program = compile_shaders();
+        let mut vertex_shader = Shader::new(ShaderType::Vertex);
+        vertex_shader.load(VERTEX_SHADER_SOURCE);
+
+        let mut fragment_shader = Shader::new(ShaderType::Fragment);
+        fragment_shader.load(FRAGMENT_SHADER_SOURCE);
+
+        self.shader_program = ShaderProgram::new();
+        self.shader_program
+            .attach(vertex_shader)
+            .attach(fragment_shader)
+            .link();
 
         unsafe {
             gl::CreateVertexArrays(1, &mut self.vao);
@@ -56,40 +65,11 @@ impl App for DemoApp {
     fn render(&mut self, _: f32) {
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, RED as *const f32);
-            gl::UseProgram(self.shader_program);
+            gl::UseProgram(self.shader_program.id);
             gl::PointSize(40.0);
             gl::DrawArrays(gl::POINTS, 0, 1);
         }
     }
-}
-
-fn compile_shaders() -> GLuint {
-    let vertex_src_str = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
-    let fragment_src_str = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
-
-    let vertex_shader;
-    let fragment_shader;
-    let shader_program;
-
-    unsafe {
-        vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
-        gl::ShaderSource(vertex_shader, 1, &vertex_src_str.as_ptr(), ptr::null());
-        gl::CompileShader(vertex_shader);
-
-        fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
-        gl::ShaderSource(fragment_shader, 1, &fragment_src_str.as_ptr(), ptr::null());
-        gl::CompileShader(fragment_shader);
-
-        shader_program = gl::CreateProgram();
-        gl::AttachShader(shader_program, vertex_shader);
-        gl::AttachShader(shader_program, fragment_shader);
-        gl::LinkProgram(shader_program);
-
-        gl::DeleteShader(vertex_shader);
-        gl::DeleteShader(fragment_shader);
-    }
-
-    shader_program
 }
 
 fn main() {

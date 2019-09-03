@@ -1,7 +1,6 @@
-use gl::types::*;
-use glfw::{Action, Context, Key};
 use std::ffi::CString;
 use std::ptr;
+use support::app::*;
 
 static VERTEX_SHADER_SOURCE: &'static str = "
 #version 450 core
@@ -24,44 +23,45 @@ void main(void)
 
 static RED: &'static [GLfloat; 4] = &[1.0, 0.0, 0.0, 1.0];
 
-fn main() {
-    let mut context = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-    let (mut window, events) = context
-        .create_window(600, 600, "Triangle", glfw::WindowMode::Windowed)
-        .expect("Failed to create GLFW window.");
+#[derive(Default)]
+struct DemoApp {
+    settings: AppSettings,
+    shader_program: u32,
+    vao: u32,
+}
 
-    window.make_current();
-    window.set_key_polling(true);
-    window.set_framebuffer_size_polling(true);
-
-    gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
-
-    let shader_program = compile_shaders();
-
-    let mut vao = 0;
-
-    unsafe {
-        gl::CreateVertexArrays(1, &mut vao);
-        gl::BindVertexArray(vao);
-    }
-
-    while !window.should_close() {
-        context.poll_events();
-        for (_, event) in glfw::flush_messages(&events) {
-            if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
-                window.set_should_close(true)
-            }
+impl DemoApp {
+    pub fn new() -> DemoApp {
+        DemoApp {
+            settings: AppSettings {
+                title: "Triangle".to_string(),
+                ..Default::default()
+            },
+            ..Default::default()
         }
-        render(shader_program);
-        window.swap_buffers();
     }
 }
 
-fn render(shader_program: u32) {
-    unsafe {
-        gl::ClearBufferfv(gl::COLOR, 0, RED as *const f32);
-        gl::UseProgram(shader_program);
-        gl::DrawArrays(gl::TRIANGLES, 0, 3);
+impl App for DemoApp {
+    fn settings(&mut self) -> &AppSettings {
+        &self.settings
+    }
+
+    fn initialize(&mut self) {
+        self.shader_program = compile_shaders();
+
+        unsafe {
+            gl::CreateVertexArrays(1, &mut self.vao);
+            gl::BindVertexArray(self.vao);
+        }
+    }
+
+    fn render(&mut self, _: f32) {
+        unsafe {
+            gl::ClearBufferfv(gl::COLOR, 0, RED as *const f32);
+            gl::UseProgram(self.shader_program);
+            gl::DrawArrays(gl::TRIANGLES, 0, 3);
+        }
     }
 }
 
@@ -92,4 +92,8 @@ fn compile_shaders() -> GLuint {
     }
 
     shader_program
+}
+
+fn main() {
+    run(&mut DemoApp::new());
 }

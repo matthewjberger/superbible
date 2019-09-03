@@ -13,6 +13,10 @@ nom = "5.0.0"
 version = "0.17.0"
 features = ["swizzle"]
 
+[lib]
+name = "support"
+path = "src/support/lib.rs"
+
 [[bin]]
 name = "solid-red"
 path = "src/00_solidred.rs"

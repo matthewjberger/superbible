@@ -1,13 +1,12 @@
-mod support;
-use crate::support::app::*;
+use support::app::*;
 
-struct FadingColorsApp {
+struct DemoApp {
     settings: AppSettings,
 }
 
-impl FadingColorsApp {
-    pub fn new() -> FadingColorsApp {
-        FadingColorsApp {
+impl DemoApp {
+    pub fn new() -> DemoApp {
+        DemoApp {
             settings: AppSettings {
                 title: "Fading Colors".to_string(),
                 ..Default::default()
@@ -16,7 +15,7 @@ impl FadingColorsApp {
     }
 }
 
-impl App for FadingColorsApp {
+impl App for DemoApp {
     fn settings(&mut self) -> &AppSettings {
         &self.settings
     }
@@ -36,5 +35,5 @@ impl App for FadingColorsApp {
 }
 
 fn main() {
-    run(&mut FadingColorsApp::new());
+    run(&mut DemoApp::new());
 }

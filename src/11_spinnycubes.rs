@@ -196,11 +196,11 @@ impl App for DemoApp {
                 let modelview = Matrix4::from_translation(vec3(0.0, 0.0, -4.0))
                     * Matrix4::from_axis_angle(
                         vec3(0.0, 1.0, 0.0).normalize(),
-                        Deg(current_time * 45 as f32),
+                        Deg(current_time * 45_f32),
                     )
                     * Matrix4::from_axis_angle(
                         vec3(1.0, 0.0, 0.0).normalize(),
-                        Deg(current_time * 21 as f32),
+                        Deg(current_time * 21_f32),
                     )
                     * Matrix4::from_translation(vec3(
                         (2.1 * factor).sin() * 2.0,

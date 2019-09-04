@@ -34,7 +34,6 @@ static BACKGROUND_COLOR: &[GLfloat; 4] = &[0.0, 0.25, 0.0, 1.0];
 
 #[derive(Default)]
 struct DemoApp {
-    settings: AppSettings,
     shader_program: ShaderProgram,
     vao: u32,
 }
@@ -42,10 +41,6 @@ struct DemoApp {
 impl DemoApp {
     pub fn new() -> DemoApp {
         DemoApp {
-            settings: AppSettings {
-                title: "Interpolation".to_string(),
-                ..Default::default()
-            },
             ..Default::default()
         }
     }
@@ -66,11 +61,7 @@ impl DemoApp {
 }
 
 impl App for DemoApp {
-    fn settings(&mut self) -> &AppSettings {
-        &self.settings
-    }
-
-    fn initialize(&mut self) {
+    fn initialize(&mut self, _: &mut glfw::Window) {
         self.load_shaders();
         unsafe {
             gl::CreateVertexArrays(1, &mut self.vao);
@@ -88,5 +79,5 @@ impl App for DemoApp {
 }
 
 fn main() {
-    run(&mut DemoApp::new());
+    DemoApp::new().run("Spinny Cube");
 }

@@ -97,7 +97,6 @@ static VERTEX_POSITIONS: &'static [GLfloat; 108] =
 
 #[derive(Default)]
 struct DemoApp {
-    settings: AppSettings,
     shader_program: ShaderProgram,
     vao: u32,
     vbo: u32,
@@ -106,14 +105,7 @@ struct DemoApp {
 
 impl DemoApp {
     pub fn new() -> DemoApp {
-        let settings = AppSettings {
-            title: "Spinny Cubes".to_string(),
-            ..Default::default()
-        };
-        let aspect_ratio = settings.initial_width as f32 / settings.initial_height as f32;
         DemoApp {
-            settings,
-            aspect_ratio,
             ..Default::default()
         }
     }
@@ -131,18 +123,20 @@ impl DemoApp {
             .attach(fragment_shader)
             .link();
     }
+
+    fn update_aspect_ratio(&mut self, width: i32, height: i32) {
+        self.aspect_ratio = width as f32 / cmp::max(height, 0) as f32;
+    }
 }
 
 impl App for DemoApp {
-    fn settings(&mut self) -> &AppSettings {
-        &self.settings
-    }
-
     fn on_resize(&mut self, width: i32, height: i32) {
-        self.aspect_ratio = width as f32 / cmp::max(height, 0) as f32;
+        self.update_aspect_ratio(width, height);
     }
 
-    fn initialize(&mut self) {
+    fn initialize(&mut self, window: &mut glfw::Window) {
+        let (width, height) = window.get_size();
+        self.update_aspect_ratio(width, height);
         self.load_shaders();
         unsafe {
             gl::GenVertexArrays(1, &mut self.vao);
@@ -216,5 +210,5 @@ impl App for DemoApp {
 }
 
 fn main() {
-    run(&mut DemoApp::new());
+    DemoApp::new().run("Spinny Cubes");
 }

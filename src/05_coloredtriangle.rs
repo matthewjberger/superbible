@@ -1,46 +1,8 @@
 use support::app::*;
 use support::shader::*;
 
-static VERTEX_SHADER_SOURCE: &str = "
-#version 450 core
-
-layout (location = 0) in vec4 offset;
-layout (location = 1) in vec4 color;
-
-out VS_OUT
-{
-    vec4 color;
-} vs_out;
-
-void main(void)
-{
-    const vec4 vertices[3] = vec4[3](vec4( 0.25, -0.25, 0.5, 1.0),
-                                     vec4(-0.25, -0.25, 0.5, 1.0),
-                                     vec4( 0.25,  0.25, 0.5, 1.0));
-    gl_Position = vertices[gl_VertexID] + offset;
-    vs_out.color = color;
-}
-";
-
-static FRAGMENT_SHADER_SOURCE: &str = "
-#version 450 core
-
-in VS_OUT
-{
-    vec4 color;
-} fs_in;
-
-out vec4 color;
-
-void main(void)
-{
-    color = fs_in.color;
-}
-";
-
 #[derive(Default)]
 struct DemoApp {
-    settings: AppSettings,
     shader_program: ShaderProgram,
     vao: u32,
 }
@@ -48,20 +10,16 @@ struct DemoApp {
 impl DemoApp {
     pub fn new() -> DemoApp {
         DemoApp {
-            settings: AppSettings {
-                title: "Colored Triangle".to_string(),
-                ..Default::default()
-            },
             ..Default::default()
         }
     }
 
     fn load_shaders(&mut self) {
         let mut vertex_shader = Shader::new(ShaderType::Vertex);
-        vertex_shader.load(VERTEX_SHADER_SOURCE);
+        vertex_shader.load_file("../assets/shaders/moving-triangle/moving-triangle.vs.glsl");
 
         let mut fragment_shader = Shader::new(ShaderType::Fragment);
-        fragment_shader.load(FRAGMENT_SHADER_SOURCE);
+        fragment_shader.load_file("../assets/shaders/moving-triangle/moving-triangle.fs.glsl");
 
         self.shader_program = ShaderProgram::new();
         self.shader_program
@@ -72,11 +30,7 @@ impl DemoApp {
 }
 
 impl App for DemoApp {
-    fn settings(&mut self) -> &AppSettings {
-        &self.settings
-    }
-
-    fn initialize(&mut self) {
+    fn initialize(&mut self, _: &mut glfw::Window) {
         self.load_shaders();
         unsafe {
             gl::CreateVertexArrays(1, &mut self.vao);
@@ -112,5 +66,5 @@ impl App for DemoApp {
 }
 
 fn main() {
-    run(&mut DemoApp::new());
+    DemoApp::new().run("Colored Triangle");
 }

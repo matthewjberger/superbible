@@ -1,6 +1,6 @@
 pub use gl::types::*;
 use std::ffi::CString;
-use std::ptr;
+use std::{fs, ptr};
 
 pub enum ShaderType {
     Vertex,
@@ -21,6 +21,10 @@ impl Shader {
         Shader {
             id: unsafe { gl::CreateShader(Shader::map_type(shader_type)) },
         }
+    }
+
+    pub fn load_file(&mut self, path: &str) {
+        self.load(&fs::read_to_string(path).unwrap());
     }
 
     pub fn load(&mut self, source: &str) {

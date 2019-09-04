@@ -35,5 +35,5 @@ impl App for DemoApp {
 }
 
 fn main() {
-    run(&mut DemoApp::new());
+    DemoApp::new().run();
 }

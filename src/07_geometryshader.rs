@@ -75,7 +75,6 @@ void main(void)
 
 #[derive(Default)]
 struct DemoApp {
-    settings: AppSettings,
     shader_program: ShaderProgram,
     vao: u32,
 }
@@ -83,10 +82,6 @@ struct DemoApp {
 impl DemoApp {
     pub fn new() -> DemoApp {
         DemoApp {
-            settings: AppSettings {
-                title: "Geometry Shader".to_string(),
-                ..Default::default()
-            },
             ..Default::default()
         }
     }
@@ -119,11 +114,7 @@ impl DemoApp {
 }
 
 impl App for DemoApp {
-    fn settings(&mut self) -> &AppSettings {
-        &self.settings
-    }
-
-    fn initialize(&mut self) {
+    fn initialize(&mut self, _: &mut glfw::Window) {
         self.load_shaders();
         unsafe {
             gl::CreateVertexArrays(1, &mut self.vao);
@@ -144,5 +135,5 @@ impl App for DemoApp {
 }
 
 fn main() {
-    run(&mut DemoApp::new());
+    DemoApp::new().run("Geometry Shader");
 }

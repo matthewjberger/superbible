@@ -1,64 +1,8 @@
 use support::app::*;
 use support::shader::*;
 
-static VERTEX_SHADER_SOURCE: &str = "
-#version 450 core
-
-void main(void)
-{
-    const vec4 vertices[] = vec4[](vec4( 0.25, -0.25, 0.5, 1.0),
-                                   vec4(-0.25, -0.25, 0.5, 1.0),
-                                   vec4( 0.25,  0.25, 0.5, 1.0));
-
-    gl_Position = vertices[gl_VertexID];
-}
-";
-
-static TESSELLATION_EVALUATION_SHADER_SOURCE: &str = "
-#version 450 core
-
-layout (triangles, equal_spacing, cw) in;
-
-void main(void)
-{
-    gl_Position = (gl_TessCoord.x * gl_in[0].gl_Position) +
-                  (gl_TessCoord.y * gl_in[1].gl_Position) +
-                  (gl_TessCoord.z * gl_in[2].gl_Position);
-}
-";
-
-static TESSELLATION_CONTROL_SHADER_SOURCE: &str = "
-#version 450 core
-
-layout (vertices = 3) out;
-
-void main(void)
-{
-    if (gl_InvocationID == 0)
-    {
-        gl_TessLevelInner[0] = 5.0;
-        gl_TessLevelOuter[0] = 5.0;
-        gl_TessLevelOuter[1] = 5.0;
-        gl_TessLevelOuter[2] = 5.0;
-    }
-    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
-}
-";
-
-static FRAGMENT_SHADER_SOURCE: &str = "
-#version 450 core
-
-out vec4 color;
-
-void main(void)
-{
-    color = vec4(0.0, 0.8, 1.0, 1.0);
-}
-";
-
 #[derive(Default)]
 struct DemoApp {
-    settings: AppSettings,
     shader_program: ShaderProgram,
     vao: u32,
 }
@@ -66,10 +10,6 @@ struct DemoApp {
 impl DemoApp {
     pub fn new() -> DemoApp {
         DemoApp {
-            settings: AppSettings {
-                title: "Tessellated Triangle".to_string(),
-                ..Default::default()
-            },
             ..Default::default()
         }
     }
@@ -98,11 +38,7 @@ impl DemoApp {
 }
 
 impl App for DemoApp {
-    fn settings(&mut self) -> &AppSettings {
-        &self.settings
-    }
-
-    fn initialize(&mut self) {
+    fn initialize(&mut self, _: &mut glfw::Window) {
         self.load_shaders();
         unsafe {
             gl::CreateVertexArrays(1, &mut self.vao);
@@ -122,5 +58,5 @@ impl App for DemoApp {
 }
 
 fn main() {
-    run(&mut DemoApp::new());
+    DemoApp::new().run("Tessellated Triangle");
 }

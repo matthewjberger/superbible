@@ -1,25 +1,8 @@
 use support::app::*;
 
-struct DemoApp {
-    settings: AppSettings,
-}
-
-impl DemoApp {
-    pub fn new() -> DemoApp {
-        DemoApp {
-            settings: AppSettings {
-                title: "Fading Colors".to_string(),
-                ..Default::default()
-            },
-        }
-    }
-}
+struct DemoApp;
 
 impl App for DemoApp {
-    fn settings(&mut self) -> &AppSettings {
-        &self.settings
-    }
-
     fn render(&mut self, current_time: f32) {
         let color: [GLfloat; 4] = [
             (current_time.sin() * 0.5) + 0.5,
@@ -35,5 +18,5 @@ impl App for DemoApp {
 }
 
 fn main() {
-    DemoApp::new().run();
+    DemoApp.run("Fading Colors");
 }

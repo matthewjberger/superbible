@@ -75,10 +75,10 @@ impl DemoApp {
 
     fn load_shaders(&mut self) {
         let mut vertex_shader = Shader::new(ShaderType::Vertex);
-        vertex_shader.load_file("../assets/shaders/spinny-cube/spinny-cube.vs.glsl");
+        vertex_shader.load_file("assets/shaders/spinny-cube/spinny-cube.vs.glsl");
 
         let mut fragment_shader = Shader::new(ShaderType::Fragment);
-        fragment_shader.load_file("../assets/shaders/spinny-cube/spinny-cube.fs.glsl");
+        fragment_shader.load_file("assets/shaders/spinny-cube/spinny-cube.fs.glsl");
 
         self.shader_program = ShaderProgram::new();
         self.shader_program

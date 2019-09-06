@@ -17,19 +17,19 @@ impl DemoApp {
     fn load_shaders(&mut self) {
         let mut vertex_shader = Shader::new(ShaderType::Vertex);
         vertex_shader
-            .load_file("../assets/shaders/tessellated-triangle/tessellated-triangle.vs.glsl");
+            .load_file("assets/shaders/tessellated-triangle/tessellated-triangle.vs.glsl");
 
         let mut tessellation_control_shader = Shader::new(ShaderType::TessellationControl);
         tessellation_control_shader
-            .load_file("../assets/shaders/tessellated-triangle/tessellated-triangle.tcs.glsl");
+            .load_file("assets/shaders/tessellated-triangle/tessellated-triangle.tcs.glsl");
 
         let mut tessellation_evaluation_shader = Shader::new(ShaderType::TessellationEvaluation);
         tessellation_evaluation_shader
-            .load_file("../assets/shaders/tessellated-triangle/tessellated-triangle.tes.glsl");
+            .load_file("assets/shaders/tessellated-triangle/tessellated-triangle.tes.glsl");
 
         let mut fragment_shader = Shader::new(ShaderType::Fragment);
         fragment_shader
-            .load_file("../assets/shaders/tessellated-triangle/tessellated-triangle.fs.glsl");
+            .load_file("assets/shaders/tessellated-triangle/tessellated-triangle.fs.glsl");
 
         self.shader_program = ShaderProgram::new();
         self.shader_program

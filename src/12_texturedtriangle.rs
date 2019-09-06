@@ -1,29 +1,6 @@
 use support::app::*;
 use support::shader::*;
 
-static VERTEX_SHADER_SOURCE: &str = "
-#version 450 core
-void main(void) {
-    const vec4 vertices[] = vec4[](vec4( 0.75, -0.75, 0.5, 1.0),
-                                   vec4(-0.75, -0.75, 0.5, 1.0),
-                                   vec4( 0.75,  0.75, 0.5, 1.0));
-    gl_Position = vertices[gl_VertexID];
-}
-";
-
-static FRAGMENT_SHADER_SOURCE: &str = "
-#version 450 core
-
-uniform sampler2D s;
-
-out vec4 color;
-
-void main(void)
-{
-    color = texture(s, gl_FragCoord.xy / textureSize(s, 0));
-}
-";
-
 static GREEN: &[GLfloat; 4] = &[0.0, 0.25, 0.0, 1.0];
 
 #[derive(Default)]
@@ -41,10 +18,10 @@ impl DemoApp {
 
     fn load_shaders(&mut self) {
         let mut vertex_shader = Shader::new(ShaderType::Vertex);
-        vertex_shader.load(VERTEX_SHADER_SOURCE);
+        vertex_shader.load_file("../assets/shaders/textured-triangle/textured-triangle.vs.glsl");
 
         let mut fragment_shader = Shader::new(ShaderType::Fragment);
-        fragment_shader.load(FRAGMENT_SHADER_SOURCE);
+        fragment_shader.load_file("../assets/shaders/textured-triangle/textured-triangle.fs.glsl");
 
         self.shader_program = ShaderProgram::new();
         self.shader_program

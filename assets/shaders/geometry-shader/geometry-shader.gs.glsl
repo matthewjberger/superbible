@@ -1,8 +1,14 @@
-#version 420 core
+#version 450 core
 
-out vec4 color;
+layout (triangles) in;
+layout (points, max_vertices = 3) out;
 
 void main(void)
 {
-  color = vec4(0.0, 0.8, 1.0, 1.0);
+  int i;
+  for (i = 0; i < gl_in.length(); i++)
+    {
+      gl_Position = gl_in[i].gl_Position;
+      EmitVertex();
+    }
 }

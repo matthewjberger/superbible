@@ -1,8 +1,10 @@
-#version 420 core
+#version 450 core
 
-out vec4 color;
+layout (triangles, equal_spacing, cw) in;
 
 void main(void)
 {
-  color = vec4(0.0, 0.8, 1.0, 1.0);
+  gl_Position = (gl_TessCoord.x * gl_in[0].gl_Position) +
+    (gl_TessCoord.y * gl_in[1].gl_Position) +
+    (gl_TessCoord.z * gl_in[2].gl_Position);
 }

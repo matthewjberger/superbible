@@ -1,8 +1,12 @@
-#version 420 core
+#version 450 core
+
+uniform sampler2D s;
+
+uniform float exposure;
 
 out vec4 color;
 
 void main(void)
 {
-  color = vec4(0.0, 0.8, 1.0, 1.0);
+  color = texture(s, gl_FragCoord.xy / textureSize(s, 0)) * exposure;
 }

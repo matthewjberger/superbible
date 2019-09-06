@@ -1,8 +1,15 @@
-#version 420 core
+#version 450 core
 
-out vec4 color;
+layout (vertices = 3) out;
 
 void main(void)
 {
-  color = vec4(0.0, 0.8, 1.0, 1.0);
+  if (gl_InvocationID == 0)
+    {
+      gl_TessLevelInner[0] = 5.0;
+      gl_TessLevelOuter[0] = 5.0;
+      gl_TessLevelOuter[1] = 5.0;
+      gl_TessLevelOuter[2] = 5.0;
+    }
+  gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 }

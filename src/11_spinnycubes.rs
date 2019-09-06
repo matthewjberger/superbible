@@ -4,42 +4,6 @@ use std::{cmp, mem, ptr};
 use support::app::*;
 use support::shader::*;
 
-static VERTEX_SHADER_SOURCE: &'static str = "
-#version 450 core
-
-in vec4 position;
-
-out VS_OUT
-{
-    vec4 color;
-} vs_out;
-
-uniform mat4 modelview_matrix;
-uniform mat4 projection_matrix;
-
-void main(void)
-{
-    gl_Position = projection_matrix * modelview_matrix * position;
-    vs_out.color = position * 2.0 + vec4(0.5, 0.5, 0.5, 0.0);
-}
-";
-
-static FRAGMENT_SHADER_SOURCE: &'static str = "
-#version 450 core
-
-out vec4 color;
-
-in VS_OUT
-{
-    vec4 color;
-} fs_in;
-
-void main(void)
-{
-    color = fs_in.color;
-}
-";
-
 const BACKGROUND_COLOR: [GLfloat; 4] = [0.0, 0.25, 0.0, 1.0];
 
 #[rustfmt::skip]
@@ -112,10 +76,10 @@ impl DemoApp {
 
     fn load_shaders(&mut self) {
         let mut vertex_shader = Shader::new(ShaderType::Vertex);
-        vertex_shader.load(VERTEX_SHADER_SOURCE);
+        vertex_shader.load_file("../assets/shaders/spinny-cubes/spinny-cubes.vs.glsl");
 
         let mut fragment_shader = Shader::new(ShaderType::Fragment);
-        fragment_shader.load(FRAGMENT_SHADER_SOURCE);
+        fragment_shader.load_file("../assets/shaders/spinny-cubes/spinny-cubes.fs.glsl");
 
         self.shader_program = ShaderProgram::new();
         self.shader_program

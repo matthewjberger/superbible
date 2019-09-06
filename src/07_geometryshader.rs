@@ -1,78 +1,6 @@
 use support::app::*;
 use support::shader::*;
 
-static VERTEX_SHADER_SOURCE: &str = "
-#version 450 core
-
-void main(void)
-{
-    const vec4 vertices[] = vec4[](vec4( 0.25, -0.25, 0.5, 1.0),
-                                   vec4(-0.25, -0.25, 0.5, 1.0),
-                                   vec4( 0.25,  0.25, 0.5, 1.0));
-
-    gl_Position = vertices[gl_VertexID];
-}
-";
-
-static TESSELLATION_CONTROL_SHADER_SOURCE: &str = "
-#version 450 core
-
-layout (vertices = 3) out;
-
-void main(void)
-{
-    if (gl_InvocationID == 0)
-    {
-        gl_TessLevelInner[0] = 5.0;
-        gl_TessLevelOuter[0] = 5.0;
-        gl_TessLevelOuter[1] = 5.0;
-        gl_TessLevelOuter[2] = 5.0;
-    }
-    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
-}
-";
-
-static TESSELLATION_EVALUATION_SHADER_SOURCE: &str = "
-#version 450 core
-
-layout (triangles, equal_spacing, cw) in;
-
-void main(void)
-{
-    gl_Position = (gl_TessCoord.x * gl_in[0].gl_Position) +
-                  (gl_TessCoord.y * gl_in[1].gl_Position) +
-                  (gl_TessCoord.z * gl_in[2].gl_Position);
-}
-";
-
-static GEOMETRY_SHADER_SOURCE: &str = "
-#version 450 core
-
-layout (triangles) in;
-layout (points, max_vertices = 3) out;
-
-void main(void)
-{
-    int i;
-    for (i = 0; i < gl_in.length(); i++)
-    {
-        gl_Position = gl_in[i].gl_Position;
-        EmitVertex();
-    }
-}
-";
-
-static FRAGMENT_SHADER_SOURCE: &str = "
-#version 450 core
-
-out vec4 color;
-
-void main(void)
-{
-    color = vec4(0.0, 0.8, 1.0, 1.0);
-}
-";
-
 #[derive(Default)]
 struct DemoApp {
     shader_program: ShaderProgram,
@@ -88,19 +16,21 @@ impl DemoApp {
 
     fn load_shaders(&mut self) {
         let mut vertex_shader = Shader::new(ShaderType::Vertex);
-        vertex_shader.load(VERTEX_SHADER_SOURCE);
+        vertex_shader.load_file("../assets/shaders/geometry-shader/geometry-shader.vs.glsl");
 
         let mut tessellation_control_shader = Shader::new(ShaderType::TessellationControl);
-        tessellation_control_shader.load(TESSELLATION_CONTROL_SHADER_SOURCE);
+        tessellation_control_shader
+            .load_file("../assets/shaders/geometry-shader/geometry-shader.tcs.glsl");
 
         let mut tessellation_evaluation_shader = Shader::new(ShaderType::TessellationEvaluation);
-        tessellation_evaluation_shader.load(TESSELLATION_EVALUATION_SHADER_SOURCE);
+        tessellation_evaluation_shader
+            .load_file("../assets/shaders/geometry-shader/geometry-shader.tes.glsl");
 
         let mut geometry_shader = Shader::new(ShaderType::Geometry);
-        geometry_shader.load(GEOMETRY_SHADER_SOURCE);
+        geometry_shader.load_file("../assets/shaders/geometry-shader/geometry-shader.gs.glsl");
 
         let mut fragment_shader = Shader::new(ShaderType::Fragment);
-        fragment_shader.load(FRAGMENT_SHADER_SOURCE);
+        fragment_shader.load_file("../assets/shaders/geometry-shader/geometry-shader.fs.glsl");
 
         self.shader_program = ShaderProgram::new();
         self.shader_program

@@ -1,28 +1,6 @@
 use support::app::*;
 use support::shader::*;
 
-static VERTEX_SHADER_SOURCE: &str = "
-#version 450 core
-void main(void) {
-    const vec4 vertices[3] = vec4[3](vec4( 0.25, -0.25, 0.5, 1.0),
-                                     vec4(-0.25, -0.25, 0.5, 1.0),
-                                     vec4( 0.25,  0.25, 0.5, 1.0));
-    gl_Position = vertices[gl_VertexID];
-}
-";
-
-static FRAGMENT_SHADER_SOURCE: &str = "
-#version 450 core
-out vec4 color;
-void main(void)
-{
-    color = vec4(sin(gl_FragCoord.x * 0.25) * 0.5 + 0.5,
-                 cos(gl_FragCoord.y * 0.25) * 0.5 + 0.5,
-                 sin(gl_FragCoord.x * 0.15) * cos(gl_FragCoord.y * 0.15),
-                 1.0);
-}
-";
-
 static BACKGROUND_COLOR: &[GLfloat; 4] = &[0.0, 0.25, 0.0, 1.0];
 
 #[derive(Default)]
@@ -40,10 +18,10 @@ impl DemoApp {
 
     fn load_shaders(&mut self) {
         let mut vertex_shader = Shader::new(ShaderType::Vertex);
-        vertex_shader.load(VERTEX_SHADER_SOURCE);
+        vertex_shader.load_file("../assets/shaders/fragment-shader/fragment-shader.vs.glsl");
 
         let mut fragment_shader = Shader::new(ShaderType::Fragment);
-        fragment_shader.load(FRAGMENT_SHADER_SOURCE);
+        fragment_shader.load_file("../assets/shaders/fragment-shader/fragment-shader.fs.glsl");
 
         self.shader_program = ShaderProgram::new();
         self.shader_program

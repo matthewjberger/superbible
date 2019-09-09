@@ -27,9 +27,9 @@ const COMMENT_BYTES: u32 = 4;
 // const VERTEX_ATTRIB_FLAG_INTEGER: u32 = 0x0000_0002;
 
 #[derive(Debug)]
-pub enum ChunkType {
+pub enum ChunkType<'a> {
     IndexData(IndexData),
-    VertexData(VertexData),
+    VertexData(VertexData<'a>),
     VertexAttributes(Vec<VertexAttribute>),
     SubObjects(Vec<SubObject>),
     Comment(String),
@@ -37,10 +37,10 @@ pub enum ChunkType {
 }
 
 #[derive(Debug)]
-pub struct VertexData {
-    data_size: u32,
+pub struct VertexData<'a> {
     data_offset: u32,
     total_vertices: u32,
+    vertices: &'a [u8],
 }
 
 #[derive(Debug)]
@@ -188,14 +188,15 @@ fn data<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], Data,
 
 fn vertex_data<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], VertexData, E> {
     let (input, _) = chunk_header(input)?;
+    let (input, data_size) = le_u32(input)?;
     context(
         "Vertex Data",
         cut(map(
-            tuple((le_u32, le_u32, le_u32)),
-            |(data_size, data_offset, total_vertices)| VertexData {
-                data_size,
+            tuple((le_u32, le_u32, take(data_size as usize))),
+            |(data_offset, total_vertices, vertices)| VertexData {
                 data_offset,
                 total_vertices,
+                vertices,
             },
         )),
     )(input)
@@ -268,7 +269,6 @@ pub fn parse_object<'a>(input: &'a [u8]) -> IResult<&'a [u8], Object> {
     let (input, _) = take((size - 16) as usize)(input)?;
 
     let (input, chunks) = many_m_n(num_chunks as usize, num_chunks as usize, chunk)(input)?;
-    println!("CHUNKS {:#?}", chunks);
 
     Ok((
         input,

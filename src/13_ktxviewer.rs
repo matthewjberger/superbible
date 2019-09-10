@@ -1,4 +1,5 @@
 use support::app::*;
+use support::ktx::prepare_texture;
 use support::load_ktx;
 use support::shader::*;
 
@@ -8,6 +9,7 @@ static GREEN: &[GLfloat; 4] = &[0.0, 0.25, 0.0, 1.0];
 struct DemoApp {
     shader_program: ShaderProgram,
     vao: u32,
+    texture: u32,
 }
 
 impl DemoApp {
@@ -35,44 +37,13 @@ impl DemoApp {
 impl App for DemoApp {
     fn initialize(&mut self, _: &mut glfw::Window) {
         self.load_shaders();
-
-        let mut texture = 0;
-
-        // Load a texture
         let (_, data) = load_ktx!("../assets/textures/tree.ktx").unwrap();
-        let ktx = data.header;
-        let image = data.pixels;
-
+        let (vao, texture) = prepare_texture(&data);
+        self.vao = vao;
+        self.texture = texture;
         unsafe {
-            gl::GenTextures(1, &mut texture);
-            gl::BindTexture(gl::TEXTURE_2D, texture);
-
-            gl::TexStorage2D(
-                gl::TEXTURE_2D,
-                ktx.mip_levels as i32,
-                ktx.gl_internal_format,
-                ktx.pixel_width as i32,
-                ktx.pixel_height as i32,
-            );
-
-            gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
-
-            gl::TexSubImage2D(
-                gl::TEXTURE_2D,
-                0,
-                0,
-                0,
-                ktx.pixel_width as i32,
-                ktx.pixel_height as i32,
-                ktx.gl_format,
-                ktx.gl_type,
-                image.as_ptr() as *const GLvoid,
-            );
-
-            gl::Viewport(0, 0, ktx.pixel_width as i32, ktx.pixel_height as i32);
-
-            gl::GenVertexArrays(1, &mut self.vao);
             gl::BindVertexArray(self.vao);
+            gl::BindTexture(gl::TEXTURE_2D, self.texture);
         }
     }
 

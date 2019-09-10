@@ -1,192 +1,128 @@
-// use cgmath::{perspective, Deg};
-use gl::types::*;
-use glfw::{Action, Context, Key};
-use std::{ffi::CString, ptr};
+use cgmath::prelude::*;
+use cgmath::{perspective, vec3, Deg, Matrix, Matrix4};
+use std::cmp;
+use support::app::*;
+use support::ktx::prepare_texture;
+use support::load_ktx;
+use support::load_object;
+use support::object::{render_object, Object};
+use support::shader::*;
 
-const SCREEN_WIDTH: u32 = 600;
-const SCREEN_HEIGHT: u32 = 600;
+const BACKGROUND_COLOR: [GLfloat; 4] = [0.0, 0.25, 0.0, 1.0];
+const GRAY: &[GLfloat; 4] = &[0.2, 0.2, 0.2, 1.0];
+const ONES: &[GLfloat; 1] = &[1.0];
 
-// TODO: Move shaders out to file
-static VERTEX_SHADER_SOURCE: &'static str = "
-#version 420 core
-
-uniform mat4 mv_matrix;
-uniform mat4 proj_matrix;
-
-layout (location = 0) in vec4 position;
-layout (location = 4) in vec2 tc;
-
-out VS_OUT
-{
-    vec2 tc;
-} vs_out;
-
-void main(void)
-{
-    vec4 pos_vs = mv_matrix * position;
-
-    vs_out.tc = tc;
-
-    gl_Position = proj_matrix * pos_vs;
-}
-";
-
-static FRAGMENT_SHADER_SOURCE: &'static str = "
-#version 420 core
-
-layout (binding = 0) uniform sampler2D tex_object;
-
-in VS_OUT
-{
-    vec2 tc;
-} fs_in;
-
-out vec4 color;
-
-void main(void)
-{
-    color = texture(tex_object, fs_in.tc * vec2(3.0, 1.0));
+#[derive(Default)]
+struct DemoApp {
+    shader_program: ShaderProgram,
+    vao: u32,
+    vbo: u32,
+    aspect_ratio: f32,
+    object: Object,
+    texture: u32,
 }
 
-";
-
-static GRAY: &'static [GLfloat; 4] = &[0.2, 0.2, 0.2, 1.0];
-static ONES: &'static [GLfloat; 1] = &[1.0];
-
-fn main() {
-    let mut context = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-    let (mut window, events) = context
-        .create_window(
-            SCREEN_WIDTH,
-            SCREEN_HEIGHT,
-            "Texture Coordinates",
-            glfw::WindowMode::Windowed,
-        )
-        .expect("Failed to create GLFW window.");
-
-    window.make_current();
-    window.set_key_polling(true);
-    window.set_framebuffer_size_polling(true);
-
-    gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
-
-    let mut vao = 0;
-    let mut texture = 0;
-
-    // TODO: Load KTX pattern as well
-    // TODO: Write object loader and load torus_nrms_tc.sbm
-
-    unsafe {
-        gl::GenTextures(1, &mut texture);
-        gl::BindTexture(gl::TEXTURE_2D, texture);
-        gl::TexStorage2D(gl::TEXTURE_2D, 1, gl::RGB8, 16, 16);
-
-        // TODO: Generate checker pattern
-        // TODO: Pass pattern data to texture
-        // gl::TexSubImage2D(
-        //     gl::TEXTURE_2D,
-        //     0,
-        //     0,
-        //     0,
-        //     16,
-        //     16,
-        //     gl::RGBA,
-        //     gl::UNSIGNED_BYTE,
-        //     data.as_ptr() as *const GLvoid,
-        // );
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-
-        gl::Enable(gl::DEPTH_TEST);
-        gl::DepthFunc(gl::LEQUAL);
-
-        gl::GenVertexArrays(1, &mut vao);
-        gl::BindVertexArray(vao);
+impl DemoApp {
+    pub fn new() -> DemoApp {
+        DemoApp {
+            ..Default::default()
+        }
     }
 
-    let shader_program = compile_shaders();
-    // let mut aspect_ratio: f32 = SCREEN_WIDTH as f32 / SCREEN_HEIGHT as f32;
+    fn load_shaders(&mut self) {
+        let mut vertex_shader = Shader::new(ShaderType::Vertex);
+        vertex_shader.load_file("assets/shaders/texture-coordinates/texture-coordinates.vs.glsl");
 
-    // TODO: Make main app that can be run and overriden
-    while !window.should_close() {
-        context.poll_events();
-        for (_, event) in glfw::flush_messages(&events) {
-            match event {
-                glfw::WindowEvent::FramebufferSize(width, height) => unsafe {
-                    // aspect_ratio = width as f32 / height as f32;
-                    gl::Viewport(0, 0, width, height)
-                },
-                glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                    window.set_should_close(true)
-                }
-                _ => {}
-            }
+        let mut fragment_shader = Shader::new(ShaderType::Fragment);
+        fragment_shader.load_file("assets/shaders/texture-coordinates/texture-coordinates.fs.glsl");
 
-            // let projection = perspective(Deg(50.0), aspect_ratio, 0.1 as f32, 1000 as f32);
+        self.shader_program = ShaderProgram::new();
+        self.shader_program
+            .attach(vertex_shader)
+            .attach(fragment_shader)
+            .link();
+    }
 
-            // Get uniform locations
-            // let mv_matrix = gl::GetUniformLocation(shader_program, "mv_matrix");
-            // let proj_matrix = gl::GetUniformLocation(shader_program, "proj_matrix");
+    fn update_aspect_ratio(&mut self, width: i32, height: i32) {
+        self.aspect_ratio = width as f32 / cmp::max(height, 0) as f32;
+    }
+}
 
-            render(context.get_time(), shader_program, texture);
+impl App for DemoApp {
+    fn on_resize(&mut self, width: i32, height: i32) {
+        self.update_aspect_ratio(width, height);
+    }
 
-            window.swap_buffers();
+    fn initialize(&mut self, window: &mut glfw::Window) {
+        let (width, height) = window.get_size();
+        self.update_aspect_ratio(width, height);
+        self.load_shaders();
+        let (_, obj) = load_object!("../assets/objects/torus_nrms_tc.sbm").unwrap();
+        self.object = obj;
+
+        unsafe {
+            gl::Enable(gl::DEPTH_TEST);
+            gl::DepthFunc(gl::LEQUAL);
+        }
+
+        // Load a texture
+        let (_, data) = load_ktx!("../assets/textures/pattern1.ktx").unwrap();
+        let (vao, texture) = prepare_texture(&data);
+        self.vao = vao;
+        self.texture = texture;
+        unsafe {
+            gl::BindVertexArray(self.vao);
+            gl::BindTexture(gl::TEXTURE_2D, self.texture);
+        }
+    }
+
+    fn render(&mut self, current_time: f32) {
+        unsafe {
+            gl::ClearBufferfv(gl::COLOR, 0, GRAY as *const f32);
+            gl::ClearBufferfv(gl::DEPTH, 0, ONES as *const f32);
+            gl::BindTexture(gl::TEXTURE_2D, self.texture);
+        }
+
+        self.shader_program.activate();
+
+        let modelview_matrix_location = self.shader_program.uniform_location("modelview_matrix");
+        let projection_matrix_location = self.shader_program.uniform_location("projection_matrix");
+        let projection = perspective(Deg(60.0), self.aspect_ratio, 0.1_f32, 1000_f32);
+
+        unsafe {
+            gl::ClearBufferfv(gl::COLOR, 0, &BACKGROUND_COLOR as *const f32);
+
+            // This is the line from the book, but it crashes the program...
+            // gl::ClearBufferfv(gl::DEPTH, 0, 1 as *const f32);
+
+            gl::Clear(gl::DEPTH_BUFFER_BIT);
+
+            gl::UniformMatrix4fv(
+                projection_matrix_location,
+                1,
+                gl::FALSE,
+                projection.as_ptr(),
+            );
+
+            let factor: f32 = current_time * 0.3;
+
+            let modelview = Matrix4::from_translation(vec3(0.0, 0.0, -3.0))
+                * Matrix4::from_axis_angle(
+                    vec3(0.0, 1.0, 0.0).normalize(),
+                    Deg(current_time * 19.3),
+                )
+                * Matrix4::from_axis_angle(
+                    vec3(0.0, 0.0, 1.0).normalize(),
+                    Deg(current_time * 21.1),
+                );
+
+            gl::UniformMatrix4fv(modelview_matrix_location, 1, gl::FALSE, modelview.as_ptr());
+
+            render_object(&self.object, 0, 1, 0);
         }
     }
 }
 
-fn render(_current_time: f64, shader_program: u32, texture: u32) {
-    unsafe {
-        gl::ClearBufferfv(gl::COLOR, 0, GRAY as *const f32);
-        gl::ClearBufferfv(gl::DEPTH, 0, ONES as *const f32);
-
-        // TODO: Swap between this and pattern
-        gl::BindTexture(gl::TEXTURE_2D, texture);
-
-        gl::UseProgram(shader_program);
-
-        // TODO: Setup MVP matrix here
-        // C++ -->
-        // vmath::mat4 proj_matrix = vmath::perspective(60.0f, (float)info.windowWidth / (float)info.windowHeight, 0.1f, 1000.0f);
-        // vmath::mat4 mv_matrix = vmath::translate(0.0f, 0.0f, -3.0f) *
-        //     vmath::rotate((float)currentTime * 19.3f, 0.0f, 1.0f, 0.0f) *
-        //     vmath::rotate((float)currentTime * 21.1f, 0.0f, 0.0f, 1.0f);
-        // then set uniforms
-        //
-        // Rust -->
-        // gl::UniformMatrix4fv(uniforms.mv_matrix, 1 gl::FALSE, mv_matrix);
-        // gl::UniformMatrix4fv(uniforms.proj_matrix, 1 gl::FALSE, proj_matrix);
-
-        // TODO: Render object
-    }
-}
-
-// TODO: Write wrapper for compiling shaders
-fn compile_shaders() -> GLuint {
-    let vertex_src_str = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
-    let fragment_src_str = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
-
-    let vertex_shader;
-    let fragment_shader;
-    let shader_program;
-
-    unsafe {
-        vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
-        gl::ShaderSource(vertex_shader, 1, &vertex_src_str.as_ptr(), ptr::null());
-        gl::CompileShader(vertex_shader);
-
-        fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
-        gl::ShaderSource(fragment_shader, 1, &fragment_src_str.as_ptr(), ptr::null());
-        gl::CompileShader(fragment_shader);
-
-        shader_program = gl::CreateProgram();
-        gl::AttachShader(shader_program, vertex_shader);
-        gl::AttachShader(shader_program, fragment_shader);
-        gl::LinkProgram(shader_program);
-
-        gl::DeleteShader(vertex_shader);
-        gl::DeleteShader(fragment_shader);
-    }
-
-    shader_program
+fn main() {
+    DemoApp::new().run("Texture Coordinates");
 }

@@ -94,15 +94,15 @@ impl VertexAttribute {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct SubObject {
     first: u32,
     count: u32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Object {
-    data_buffer: GLuint,
+    vbo: GLuint,
     vao: GLuint,
     index_type: GLuint,
     index_offset: GLuint,
@@ -292,28 +292,12 @@ pub fn parse_object<'a>(input: &'a [u8]) -> IResult<&'a [u8], Object> {
 
     let (input, chunks) = many_m_n(num_chunks as usize, num_chunks as usize, chunk)(input)?;
 
-    setup_gl(chunks);
+    let object = setup_gl(chunks);
 
-    Ok((
-        input,
-        Object {
-            data_buffer: 0,
-            vao: 0,
-            index_type: 0,
-            index_offset: 0,
-            sub_object: Vec::new(),
-        },
-    ))
+    Ok((input, object))
 }
 
-fn setup_gl(chunks: Vec<ChunkType>) {
-    // #[derive(Debug)]
-    // pub struct VertexData<'a> {
-    //     data_offset: u32,
-    //     total_vertices: u32,
-    //     vertices: &'a [u8],
-    // }
-
+fn setup_gl(chunks: Vec<ChunkType>) -> Object {
     let mut comment_chunk: Option<String> = None;
     let mut data_chunk: Option<Data> = None;
     let mut index_data_chunk: Option<IndexData> = None;
@@ -335,113 +319,86 @@ fn setup_gl(chunks: Vec<ChunkType>) {
     let mut vbo = 0;
     let mut index_type = 0;
     let mut index_offset = 0;
-    let mut sub_objects = Vec::new();
 
     unsafe {
         gl::GenVertexArrays(1, &mut vao);
         gl::BindVertexArray(vao);
     }
 
-    if data_chunk.is_some() {
-        let data = data_chunk.unwrap();
+    let mut data_size = 0;
+    let mut size_used = 0;
+
+    if vertex_data_chunk.is_some() {
+        let vertex_data = vertex_data_chunk.as_ref().unwrap();
+        data_size += vertex_data.data_size;
+    }
+
+    unsafe {
+        gl::GenBuffers(1, &mut vbo);
+        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
+        gl::BufferData(gl::ARRAY_BUFFER, data_size, ptr::null(), gl::STATIC_DRAW);
+    }
+
+    if vertex_data_chunk.is_some() {
+        let vertex_data = vertex_data_chunk.as_ref().unwrap();
         unsafe {
-            gl::GenBuffers(1, &mut vbo);
-            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-            // TODO: Load up and fill out data
-            // gl::BufferData(gl::ARRAY_BUFFER, data.data_length, , gl::STATIC_DRAW);
+            gl::BufferSubData(
+                gl::ARRAY_BUFFER,
+                0,
+                vertex_data.data_size,
+                vertex_data.vertices.as_ptr() as *const gl::types::GLvoid,
+            );
         }
-    } else {
-        let mut data_size = 0;
-        let mut size_used = 0;
+        size_used += vertex_data.data_offset;
+    }
 
-        if vertex_data_chunk.is_some() {
-            let vertex_data = vertex_data_chunk.as_ref().unwrap();
-            data_size += vertex_data.data_size;
-        }
-
-        if index_data_chunk.is_some() {
-            let index_data = index_data_chunk.unwrap();
-            data_size += ((index_data.index_count as usize) * index_data.type_size()) as isize;
-        }
-
+    let vertex_attributes = vertex_attributes_chunk.as_ref().unwrap();
+    for (index, attribute) in vertex_attributes.iter().enumerate() {
         unsafe {
-            gl::GenBuffers(1, &mut vbo);
-            gl::BindBuffer(gl::ARRAY_BUFFER, vbo);
-            gl::BufferData(gl::ARRAY_BUFFER, data_size, ptr::null(), gl::STATIC_DRAW);
+            gl::VertexAttribPointer(
+                index as u32,
+                attribute.size as i32,
+                attribute.attribute_type,
+                attribute.is_normalized(),
+                attribute.stride as i32,
+                attribute.data_offset as *const gl::types::GLvoid,
+            );
+            gl::EnableVertexAttribArray(index as u32);
         }
+    }
 
-        if vertex_data_chunk.is_some() {
-            let vertex_data = vertex_data_chunk.as_ref().unwrap();
-            unsafe {
-                gl::BufferSubData(
-                    gl::ARRAY_BUFFER,
-                    0,
-                    vertex_data.data_size,
-                    vertex_data.vertices.as_ptr() as *const gl::types::GLvoid,
-                );
-            }
-            size_used += vertex_data.data_offset;
-        }
+    index_type = gl::NONE;
 
-        // TODO: Load and add index data here
-        // if index_data_chunk.is_some() {
-        //     let index_data = index_data_chunk.as_ref().unwrap();
-        //     unsafe {
-        //         gl::BufferSubData(
-        //             gl::ARRAY_BUFFER,
-        //             size_used as isize,
-        //             index_data.index_count as isize * index_data.type_size() as isize,
-        //             index_data.index_data_offset,
-        //         );
-        //     }
-        // }
+    unsafe {
+        gl::BindVertexArray(0);
+        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0);
+    }
 
-        let vertex_attributes = vertex_attributes_chunk.as_ref().unwrap();
-        for (index, attribute) in vertex_attributes.iter().enumerate() {
-            unsafe {
-                gl::VertexAttribPointer(
-                    index as u32,
-                    attribute.size as i32,
-                    attribute.attribute_type,
-                    attribute.is_normalized(),
-                    attribute.stride as i32,
-                    attribute.data_offset as *const gl::types::GLvoid,
-                );
-                gl::EnableVertexAttribArray(index as u32);
-            }
-        }
+    let mut sub_objects = Vec::new();
+    let vertex_data = vertex_data_chunk.as_ref().unwrap();
+    sub_objects.push(SubObject {
+        first: 0,
+        count: vertex_data.total_vertices,
+    });
 
-        if index_data_chunk.is_some() {
-            unsafe {
-                let index_data = index_data_chunk.unwrap();
-                gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, vbo);
-                index_type = index_data.index_type;
-                index_offset = index_data.index_data_offset;
-            }
-        } else {
-            index_type = gl::NONE;
-        }
-
-        if sub_objects_chunk.is_some() {
-            sub_objects = sub_objects_chunk.unwrap();
-        }
-
-        unsafe {
-            gl::BindVertexArray(0);
-            gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0);
-        }
+    Object {
+        vbo,
+        vao,
+        index_type,
+        index_offset,
+        sub_object: sub_objects,
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn load_object() {
-        assert!(
-            !load_object!("../../assets/objects/torus_nrms_tc.sbm").is_err(),
-            "Failed to load the object!"
+pub fn render_object(object: &Object, index: u32, instance_count: u32, base_instance: u32) {
+    unsafe {
+        gl::BindVertexArray(object.vao);
+        gl::DrawArraysInstancedBaseInstance(
+            gl::TRIANGLES,
+            object.sub_object[index as usize].first as i32,
+            object.sub_object[index as usize].count as i32,
+            instance_count as i32,
+            base_instance,
         );
     }
 }

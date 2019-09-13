@@ -1,4 +1,4 @@
-use gl::types::{GLsizeiptr, GLubyte, GLuint, GLushort};
+use gl::types::{GLsizeiptr, GLuint};
 use nom::{
     branch::alt,
     bytes::complete::{tag, take},
@@ -61,16 +61,6 @@ pub struct IndexData {
     index_type: u32,
     index_count: u32,
     index_data_offset: u32,
-}
-
-impl IndexData {
-    fn type_size(&self) -> usize {
-        if self.index_type == gl::UNSIGNED_SHORT {
-            mem::size_of::<GLushort>()
-        } else {
-            mem::size_of::<GLubyte>()
-        }
-    }
 }
 
 #[derive(Debug)]
@@ -392,7 +382,7 @@ fn prepare_object(chunks: Vec<ChunkType>) -> Object {
 
 pub fn render_all(object: &Object) {
     render_object(object, 0, 1, 0);
-    for (index, sub_object) in object.sub_objects.iter().enumerate() {
+    for (index, _) in object.sub_objects.iter().enumerate() {
         render_object(object, index as u32, 1, 0);
     }
 }

@@ -5,64 +5,44 @@ use support::app::*;
 use support::ktx::prepare_texture;
 use support::load_ktx;
 use support::load_object;
-use support::object::{render_all, render_object, Object};
+use support::object::{render_all, Object};
 use support::shader::*;
 
-const BACKGROUND_COLOR: [GLfloat; 4] = [0.0, 0.25, 0.0, 1.0];
 const GRAY: &[GLfloat; 4] = &[0.2, 0.2, 0.2, 1.0];
 const ONES: &[GLfloat; 1] = &[1.0];
 
 fn create_procedural_texture() -> u32 {
-    let (width, height) = (256 as usize, 256 as usize);
     let mut texture = 0;
 
-    // Define data to upload into the texture
-    let mask = 0xFF;
-    let max = 255.0;
-    let mut data = vec![1.0; width * height * 4];
-    for y in 0..height {
-        for x in 0..width {
-            let index = y * width + x;
-            data[index * 4] = ((x & y) & mask) as f32 / max;
-            data[index * 4 + 1] = ((x | y) & mask) as f32 / max;
-            data[index * 4 + 2] = ((x ^ y) & mask) as f32 / max;
-            data[index * 4 + 3] = 1.0;
+    let dimension: i32 = 16;
+    let mut data = Vec::new();
+    for column in 0..dimension {
+        for row in 0..dimension {
+            let value = match (row % 2, column % 2) {
+                (0, 0) | (1, 1) => 0xFFFF_FFFF,
+                (_, _) => 0_u32,
+            };
+            data.push(value);
         }
     }
 
     unsafe {
-        // Generate a name for the texture
         gl::GenTextures(1, &mut texture);
-
-        // Bind it to the context using the GL_TEXTURE_2D binding point
         gl::BindTexture(gl::TEXTURE_2D, texture);
-
-        // Specify the amount of storage we want to use for this texture
-        // * 2D texture
-        // * 8 mipmap levels
-        // * 32-bit floating point RGBA data
-        // * 256 x 256 texels
-        gl::TexStorage2D(gl::TEXTURE_2D, 8, gl::RGBA32F, width as i32, height as i32);
-
-        // Specify a two dimensional texture subimage
-        // * 2D texture
-        // * Level 0
-        // * Offset 0, 0
-        // * 256 x 256 texels, replace entire image
-        // * Four channel data
-        // * Floating point data
-        // * Pointer to data
+        gl::TexStorage2D(gl::TEXTURE_2D, 1, gl::RGB8, dimension, dimension);
         gl::TexSubImage2D(
             gl::TEXTURE_2D,
             0,
             0,
             0,
-            256,
-            256,
+            dimension,
+            dimension,
             gl::RGBA,
-            gl::FLOAT,
+            gl::UNSIGNED_BYTE,
             data.as_ptr() as *const GLvoid,
         );
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
+        gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
     }
     texture
 }
@@ -74,6 +54,7 @@ struct DemoApp {
     object: Object,
     texture_1: u32,
     texture_2: u32,
+    current_texture: u32,
 }
 
 impl DemoApp {
@@ -81,6 +62,21 @@ impl DemoApp {
         DemoApp {
             ..Default::default()
         }
+    }
+
+    fn bind_texture(&mut self, texture: u32) {
+        self.current_texture = texture;
+        unsafe {
+            gl::BindTexture(gl::TEXTURE_2D, self.current_texture);
+        }
+    }
+
+    fn toggle_texture(&mut self) {
+        if self.current_texture == self.texture_1 {
+            self.bind_texture(self.texture_2)
+        } else {
+            self.bind_texture(self.texture_1);
+        };
     }
 
     fn load_shaders(&mut self) {
@@ -112,6 +108,21 @@ impl App for DemoApp {
         self.update_aspect_ratio(width, height);
     }
 
+    fn on_key(&mut self, key: Key, action: Action) {
+        if action != glfw::Action::Release {
+            return;
+        }
+        match (key, action) {
+            (glfw::Key::T, glfw::Action::Release) => {
+                self.toggle_texture();
+            }
+            (glfw::Key::R, glfw::Action::Release) => {
+                self.load_shaders();
+            }
+            _ => (),
+        }
+    }
+
     fn initialize(&mut self, window: &mut glfw::Window) {
         let (width, height) = window.get_size();
         self.update_aspect_ratio(width, height);
@@ -120,6 +131,7 @@ impl App for DemoApp {
         let (_, data) = load_ktx!("../assets/textures/pattern1.ktx").unwrap();
         self.texture_1 = prepare_texture(&data);
         self.texture_2 = create_procedural_texture();
+        self.bind_texture(self.texture_1);
 
         let (_, obj) = load_object!("../assets/objects/torus_nrms_tc.sbm").unwrap();
         self.object = obj;
@@ -134,8 +146,6 @@ impl App for DemoApp {
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, GRAY as *const f32);
             gl::ClearBufferfv(gl::DEPTH, 0, ONES as *const f32);
-
-            gl::BindTexture(gl::TEXTURE_2D, self.texture_2);
         }
 
         self.shader_program.activate();
@@ -151,8 +161,6 @@ impl App for DemoApp {
                 gl::FALSE,
                 projection.as_ptr(),
             );
-
-            let factor: f32 = current_time * 0.3;
 
             let modelview = Matrix4::from_translation(vec3(0.0, 0.0, -3.0))
                 * Matrix4::from_axis_angle(

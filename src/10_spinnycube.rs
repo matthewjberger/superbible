@@ -4,7 +4,8 @@ use std::{cmp, mem, ptr};
 use support::app::*;
 use support::shader::*;
 
-const BACKGROUND_COLOR: [GLfloat; 4] = [0.0, 0.25, 0.0, 1.0];
+const BACKGROUND_COLOR: &[GLfloat; 4] = &[0.0, 0.25, 0.0, 1.0];
+const ONES: &[GLfloat; 1] = &[1.0];
 
 #[rustfmt::skip]
 static VERTEX_POSITIONS: &[GLfloat; 108] =
@@ -128,18 +129,12 @@ impl App for DemoApp {
         self.shader_program.activate();
 
         let modelview_matrix_location = self.shader_program.uniform_location("modelview_matrix");
-
         let projection_matrix_location = self.shader_program.uniform_location("projection_matrix");
-
         let projection = perspective(Deg(50.0), self.aspect_ratio, 0.1_f32, 1000_f32);
 
         unsafe {
-            gl::ClearBufferfv(gl::COLOR, 0, &BACKGROUND_COLOR as *const f32);
-
-            // This is the line from the book, but it crashes the program...
-            // gl::ClearBufferfv(gl::DEPTH, 0, 1 as *const f32);
-
-            gl::Clear(gl::DEPTH_BUFFER_BIT);
+            gl::ClearBufferfv(gl::COLOR, 0, BACKGROUND_COLOR as *const f32);
+            gl::ClearBufferfv(gl::DEPTH, 0, ONES as *const f32);
 
             gl::UniformMatrix4fv(
                 projection_matrix_location,

@@ -97,17 +97,35 @@ pub fn prepare_texture(ktx_texture: &KtxData) -> u32 {
 
         gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
 
-        gl::TexSubImage2D(
-            gl::TEXTURE_2D,
-            0,
-            0,
-            0,
-            ktx.pixel_width as i32,
-            ktx.pixel_height as i32,
-            ktx.gl_format,
-            ktx.gl_type,
-            image.as_ptr() as *const GLvoid,
-        );
+        for level in 0..ktx.mip_levels {
+            gl::TexSubImage2D(
+                gl::TEXTURE_2D,
+                level as i32,
+                0,
+                0,
+                ktx.pixel_width as i32,
+                ktx.pixel_height as i32,
+                ktx.gl_format,
+                ktx.gl_type,
+                image.as_ptr() as *const GLvoid,
+            );
+        }
+
+        if ktx.mip_levels == 1 {
+            gl::GenerateMipmap(gl::TEXTURE_2D);
+        }
     }
     texture
 }
+
+// fn calculate_stride(ktx_texture: &KtxData, width: u32) {
+//     let ktx = &ktx_texture.header;
+//     let channels = match ktx.gl_base_internal_format {
+//         gl::RED => 1,
+//         gl::RG => 2,
+//         gl::BGR | gl::RGB => 3,
+//         gl::BGRA | gl::RGBA => 4,
+//         _ => 0,
+//     };
+//     let stride = ktx.gl_type_size * channels * ktx.pixel_width;
+// }

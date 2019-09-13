@@ -77,3 +77,7 @@ path = "src/13_ktxviewer.rs"
 [[bin]]
 name = "texture-coordinates"
 path = "src/14_texturecoordinates.rs"
+
+[[bin]]
+name = "tunnel"
+path = "src/15_tunnel.rs"

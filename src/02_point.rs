@@ -1,7 +1,7 @@
 use support::app::*;
 use support::shader::*;
 
-static RED: &'static [GLfloat; 4] = &[1.0, 0.0, 0.0, 1.0];
+const RED: &[GLfloat; 4] = &[1.0, 0.0, 0.0, 1.0];
 
 #[derive(Default)]
 struct DemoApp {

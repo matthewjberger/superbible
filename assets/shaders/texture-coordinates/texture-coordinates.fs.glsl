@@ -11,6 +11,5 @@ out vec4 color;
 
 void main(void)
 {
-  // color = texture(tex_object, fs_in.tc * vec2(3.0, 1.0));
-  color = texture(tex_object, vec2(1, 1) * vec2(3.0, 1.0));
+  color = texture(tex_object, fs_in.tc * vec2(3.0, 1.0));
 }

@@ -38,12 +38,17 @@ impl App for DemoApp {
     fn initialize(&mut self, _: &mut glfw::Window) {
         self.load_shaders();
         let (_, data) = load_ktx!("../assets/textures/tree.ktx").unwrap();
-        let (vao, texture) = prepare_texture(&data);
-        self.vao = vao;
-        self.texture = texture;
+        self.texture = prepare_texture(&data);
         unsafe {
+            gl::GenVertexArrays(1, &mut self.vao);
             gl::BindVertexArray(self.vao);
             gl::BindTexture(gl::TEXTURE_2D, self.texture);
+            gl::Viewport(
+                0,
+                0,
+                data.header.pixel_width as i32,
+                data.header.pixel_height as i32,
+            );
         }
     }
 

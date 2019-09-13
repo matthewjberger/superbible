@@ -79,11 +79,10 @@ pub fn parse_ktx<'a>(input: &'a [u8]) -> IResult<&'a [u8], KtxData> {
     ))
 }
 
-pub fn prepare_texture(ktx_texture: &KtxData) -> (u32, u32) {
+pub fn prepare_texture(ktx_texture: &KtxData) -> u32 {
     let ktx = &ktx_texture.header;
     let image = &ktx_texture.pixels;
     let mut texture = 0;
-    let mut vao = 0;
     unsafe {
         gl::GenTextures(1, &mut texture);
         gl::BindTexture(gl::TEXTURE_2D, texture);
@@ -109,10 +108,6 @@ pub fn prepare_texture(ktx_texture: &KtxData) -> (u32, u32) {
             ktx.gl_type,
             image.as_ptr() as *const GLvoid,
         );
-
-        gl::Viewport(0, 0, ktx.pixel_width as i32, ktx.pixel_height as i32);
-
-        gl::GenVertexArrays(1, &mut vao);
     }
-    (texture, vao)
+    texture
 }

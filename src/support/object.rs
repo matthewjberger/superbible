@@ -21,7 +21,6 @@ const DATA_TAG: &str = "DATA";
 
 const CHUNK_HEADER_BYTES: u32 = 4;
 const VERTEX_ATTRIBUTE_NAME_BYTES: u32 = 64;
-const COMMENT_BYTES: u32 = 4;
 
 const VERTEX_ATTRIB_FLAG_NORMALIZED: u32 = 0x0000_0001;
 // const VERTEX_ATTRIB_FLAG_INTEGER: u32 = 0x0000_0002;
@@ -104,9 +103,7 @@ pub struct SubObject {
 pub struct Object {
     vbo: GLuint,
     vao: GLuint,
-    index_type: GLuint,
-    index_offset: GLuint,
-    sub_object: Vec<SubObject>,
+    sub_objects: Vec<SubObject>,
 }
 
 #[macro_export]
@@ -186,7 +183,7 @@ fn comment<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], St
     context(
         "Comment",
         cut(map(
-            take((header.chunk_size - COMMENT_BYTES) as usize),
+            take((header.chunk_size - 8_u32) as usize),
             bytes_to_string,
         )),
     )(input)
@@ -275,8 +272,6 @@ fn sub_objects<'a, E: ParseError<&'a [u8]>>(
 }
 
 pub fn parse_object<'a>(input: &'a [u8]) -> IResult<&'a [u8], Object> {
-    // let mut sub_object = [SubObjectDecl { first: 0, count: 0 }; 256];
-
     let (input, _) = alt((
         tag(HEADER_TAG),                                              // Little Endian
         tag(HEADER_TAG.chars().rev().collect::<String>().as_bytes()), // Big Endian
@@ -292,23 +287,31 @@ pub fn parse_object<'a>(input: &'a [u8]) -> IResult<&'a [u8], Object> {
 
     let (input, chunks) = many_m_n(num_chunks as usize, num_chunks as usize, chunk)(input)?;
 
-    let object = setup_gl(chunks);
+    let object = prepare_object(chunks);
 
     Ok((input, object))
 }
 
-fn setup_gl(chunks: Vec<ChunkType>) -> Object {
-    let mut comment_chunk: Option<String> = None;
-    let mut data_chunk: Option<Data> = None;
-    let mut index_data_chunk: Option<IndexData> = None;
+fn prepare_object(chunks: Vec<ChunkType>) -> Object {
+    // TODO:
+    // Only one of the book's models (asteroids.sbm) use chunks besides the VertexData and VertexAttributes chunks.
+    // So this doesn't use any info from the chunks other than that.
+    // If a .sbm file comes up that actually has IndexData in it, this will have to be updated
+    // according to the source from the book's github repo.
+    // The IndexData and Data chunks will need to have data read in as well.
+
+    let mut _comment_chunk: Option<String> = None;
+    let mut _data_chunk: Option<Data> = None;
+    let mut _index_data_chunk: Option<IndexData> = None;
     let mut sub_objects_chunk: Option<Vec<SubObject>> = None;
     let mut vertex_attributes_chunk: Option<Vec<VertexAttribute>> = None;
     let mut vertex_data_chunk: Option<VertexData> = None;
+
     for chunk in chunks {
         match chunk {
-            ChunkType::Comment(comment) => comment_chunk = Some(comment),
-            ChunkType::Data(data) => data_chunk = Some(data),
-            ChunkType::IndexData(index_data) => index_data_chunk = Some(index_data),
+            ChunkType::Comment(comment) => _comment_chunk = Some(comment),
+            ChunkType::Data(data) => _data_chunk = Some(data),
+            ChunkType::IndexData(index_data) => _index_data_chunk = Some(index_data),
             ChunkType::SubObjects(sub_objects) => sub_objects_chunk = Some(sub_objects),
             ChunkType::VertexAttributes(attributes) => vertex_attributes_chunk = Some(attributes),
             ChunkType::VertexData(vertex_data) => vertex_data_chunk = Some(vertex_data),
@@ -317,8 +320,6 @@ fn setup_gl(chunks: Vec<ChunkType>) -> Object {
 
     let mut vao = 0;
     let mut vbo = 0;
-    let mut index_type = 0;
-    let mut index_offset = 0;
 
     unsafe {
         gl::GenVertexArrays(1, &mut vao);
@@ -326,7 +327,6 @@ fn setup_gl(chunks: Vec<ChunkType>) -> Object {
     }
 
     let mut data_size = 0;
-    let mut size_used = 0;
 
     if vertex_data_chunk.is_some() {
         let vertex_data = vertex_data_chunk.as_ref().unwrap();
@@ -349,7 +349,6 @@ fn setup_gl(chunks: Vec<ChunkType>) -> Object {
                 vertex_data.vertices.as_ptr() as *const gl::types::GLvoid,
             );
         }
-        size_used += vertex_data.data_offset;
     }
 
     let vertex_attributes = vertex_attributes_chunk.as_ref().unwrap();
@@ -367,26 +366,34 @@ fn setup_gl(chunks: Vec<ChunkType>) -> Object {
         }
     }
 
-    index_type = gl::NONE;
-
     unsafe {
         gl::BindVertexArray(0);
         gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, 0);
     }
 
-    let mut sub_objects = Vec::new();
-    let vertex_data = vertex_data_chunk.as_ref().unwrap();
-    sub_objects.push(SubObject {
-        first: 0,
-        count: vertex_data.total_vertices,
-    });
+    let sub_objects = if sub_objects_chunk.is_none() {
+        let mut sub_object_list = Vec::new();
+        let vertex_data = vertex_data_chunk.as_ref().unwrap();
+        sub_object_list.push(SubObject {
+            first: 0,
+            count: vertex_data.total_vertices,
+        });
+        sub_object_list
+    } else {
+        sub_objects_chunk.unwrap()
+    };
 
     Object {
         vbo,
         vao,
-        index_type,
-        index_offset,
-        sub_object: sub_objects,
+        sub_objects,
+    }
+}
+
+pub fn render_all(object: &Object) {
+    render_object(object, 0, 1, 0);
+    for (index, sub_object) in object.sub_objects.iter().enumerate() {
+        render_object(object, index as u32, 1, 0);
     }
 }
 
@@ -395,8 +402,8 @@ pub fn render_object(object: &Object, index: u32, instance_count: u32, base_inst
         gl::BindVertexArray(object.vao);
         gl::DrawArraysInstancedBaseInstance(
             gl::TRIANGLES,
-            object.sub_object[index as usize].first as i32,
-            object.sub_object[index as usize].count as i32,
+            object.sub_objects[index as usize].first as i32,
+            object.sub_objects[index as usize].count as i32,
             instance_count as i32,
             base_instance,
         );

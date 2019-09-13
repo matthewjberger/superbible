@@ -5,7 +5,7 @@ use support::app::*;
 use support::ktx::prepare_texture;
 use support::load_ktx;
 use support::load_object;
-use support::object::{render_object, Object};
+use support::object::{render_all, render_object, Object};
 use support::shader::*;
 
 const BACKGROUND_COLOR: [GLfloat; 4] = [0.0, 0.25, 0.0, 1.0];
@@ -15,8 +15,6 @@ const ONES: &[GLfloat; 1] = &[1.0];
 #[derive(Default)]
 struct DemoApp {
     shader_program: ShaderProgram,
-    vao: u32,
-    vbo: u32,
     aspect_ratio: f32,
     object: Object,
     texture: u32,
@@ -41,6 +39,11 @@ impl DemoApp {
             .attach(vertex_shader)
             .attach(fragment_shader)
             .link();
+
+        unsafe {
+            gl::Enable(gl::DEPTH_TEST);
+            gl::DepthFunc(gl::LEQUAL);
+        }
     }
 
     fn update_aspect_ratio(&mut self, width: i32, height: i32) {
@@ -57,22 +60,16 @@ impl App for DemoApp {
         let (width, height) = window.get_size();
         self.update_aspect_ratio(width, height);
         self.load_shaders();
+
+        let (_, data) = load_ktx!("../assets/textures/pattern1.ktx").unwrap();
+        self.texture = prepare_texture(&data);
+
         let (_, obj) = load_object!("../assets/objects/torus_nrms_tc.sbm").unwrap();
         self.object = obj;
 
         unsafe {
             gl::Enable(gl::DEPTH_TEST);
             gl::DepthFunc(gl::LEQUAL);
-        }
-
-        // Load a texture
-        let (_, data) = load_ktx!("../assets/textures/pattern1.ktx").unwrap();
-        let (vao, texture) = prepare_texture(&data);
-        self.vao = vao;
-        self.texture = texture;
-        unsafe {
-            gl::BindVertexArray(self.vao);
-            gl::BindTexture(gl::TEXTURE_2D, self.texture);
         }
     }
 
@@ -90,13 +87,6 @@ impl App for DemoApp {
         let projection = perspective(Deg(60.0), self.aspect_ratio, 0.1_f32, 1000_f32);
 
         unsafe {
-            gl::ClearBufferfv(gl::COLOR, 0, &BACKGROUND_COLOR as *const f32);
-
-            // This is the line from the book, but it crashes the program...
-            // gl::ClearBufferfv(gl::DEPTH, 0, 1 as *const f32);
-
-            gl::Clear(gl::DEPTH_BUFFER_BIT);
-
             gl::UniformMatrix4fv(
                 projection_matrix_location,
                 1,
@@ -117,9 +107,9 @@ impl App for DemoApp {
                 );
 
             gl::UniformMatrix4fv(modelview_matrix_location, 1, gl::FALSE, modelview.as_ptr());
-
-            render_object(&self.object, 0, 1, 0);
         }
+
+        render_all(&self.object);
     }
 }
 

@@ -37,12 +37,6 @@ impl DemoApp {
             .attach(vertex_shader)
             .attach(fragment_shader)
             .link();
-
-        let mut vao = 0;
-        unsafe {
-            gl::GenVertexArrays(1, &mut vao);
-            gl::BindVertexArray(vao);
-        }
     }
 }
 
@@ -50,8 +44,11 @@ impl App for DemoApp {
     fn initialize(&mut self, _: &mut glfw::Window) {
         self.load_shaders();
         let (_, data) = load_ktx!("../assets/textures/rightarrows.ktx").unwrap();
+        let mut vao = 0;
         let texture = prepare_texture(&data);
         unsafe {
+            gl::GenVertexArrays(1, &mut vao);
+            gl::BindVertexArray(vao);
             gl::BindTexture(gl::TEXTURE_2D, texture);
         }
     }

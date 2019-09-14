@@ -81,3 +81,7 @@ path = "src/14_texturecoordinates.rs"
 [[bin]]
 name = "tunnel"
 path = "src/15_tunnel.rs"
+
+[[bin]]
+name = "wrapmodes"
+path = "src/16_wrapmodes.rs"

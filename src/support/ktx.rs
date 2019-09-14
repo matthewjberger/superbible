@@ -97,18 +97,33 @@ pub fn prepare_texture(ktx_texture: &KtxData) -> u32 {
 
         gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
 
+        let mut image_ptr = image.as_ptr() as *const GLvoid;
+        let mut width = ktx.pixel_width as i32;
+        let mut height = ktx.pixel_height as i32;
+
         for level in 0..ktx.mip_levels {
             gl::TexSubImage2D(
                 gl::TEXTURE_2D,
                 level as i32,
                 0,
                 0,
-                ktx.pixel_width as i32,
-                ktx.pixel_height as i32,
+                width,
+                height,
                 ktx.gl_format,
                 ktx.gl_type,
-                image.as_ptr() as *const GLvoid,
+                image_ptr,
             );
+
+            let stride = calculate_stride(&ktx_texture, width, 1);
+            image_ptr = image_ptr.offset(height as isize * stride);
+            height >>= 1;
+            width >>= 1;
+            if height == 0 {
+                height = 1;
+            }
+            if width == 0 {
+                width = 1;
+            }
         }
 
         if ktx.mip_levels == 1 {
@@ -118,14 +133,14 @@ pub fn prepare_texture(ktx_texture: &KtxData) -> u32 {
     texture
 }
 
-// fn calculate_stride(ktx_texture: &KtxData, width: u32) {
-//     let ktx = &ktx_texture.header;
-//     let channels = match ktx.gl_base_internal_format {
-//         gl::RED => 1,
-//         gl::RG => 2,
-//         gl::BGR | gl::RGB => 3,
-//         gl::BGRA | gl::RGBA => 4,
-//         _ => 0,
-//     };
-//     let stride = ktx.gl_type_size * channels * ktx.pixel_width;
-// }
+fn calculate_stride(ktx_texture: &KtxData, width: i32, pad: usize) -> isize {
+    let ktx = &ktx_texture.header;
+    let channels = match ktx.gl_base_internal_format {
+        gl::RED => 1,
+        gl::RG => 2,
+        gl::BGR | gl::RGB => 3,
+        gl::BGRA | gl::RGBA => 4,
+        _ => 0,
+    };
+    (((ktx.gl_type_size * channels * width as u32) as usize + (pad - 1)) & !(pad - 1)) as isize
+}

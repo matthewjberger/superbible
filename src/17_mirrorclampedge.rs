@@ -2,12 +2,14 @@ use support::app::*;
 use support::ktx::prepare_texture;
 use support::load_ktx;
 use support::shader::*;
+use support::text::*;
 
 const BLACK: &[GLfloat; 4] = &[0.0, 0.0, 0.0, 0.0];
 
 #[derive(Default)]
 struct DemoApp {
     shader_program: ShaderProgram,
+    text_overlay: TextOverlay,
 }
 
 impl DemoApp {
@@ -33,7 +35,7 @@ impl DemoApp {
 }
 
 impl App for DemoApp {
-    fn initialize(&mut self, _: &mut glfw::Window) {
+    fn initialize(&mut self, window: &mut glfw::Window) {
         self.load_shaders();
         let (_, data) = load_ktx!("../assets/textures/flare.ktx").unwrap();
         let texture = prepare_texture(&data);
@@ -44,6 +46,9 @@ impl App for DemoApp {
             gl::GenVertexArrays(1, &mut vao);
             gl::BindVertexArray(vao);
         }
+
+        let (width, height) = window.get_size();
+        self.text_overlay.initialize(width, height);
     }
 
     fn render(&mut self, _: f32) {
@@ -64,6 +69,9 @@ impl App for DemoApp {
 
             gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
         }
+        self.text_overlay.clear();
+        self.text_overlay.draw_text("Testing!".to_string(), 0, 0);
+        self.text_overlay.render();
     }
 }
 

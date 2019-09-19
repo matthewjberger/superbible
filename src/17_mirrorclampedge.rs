@@ -17,7 +17,7 @@ struct DemoApp {
 impl DemoApp {
     pub fn new() -> DemoApp {
         DemoApp {
-            wrapmode: gl::CLAMP_TO_EDGE,
+            wrapmode: gl::CLAMP_TO_BORDER,
             ..Default::default()
         }
     }
@@ -38,7 +38,7 @@ impl DemoApp {
 
     pub fn toggle_wrapmode(&mut self) {
         if self.wrapmode == gl::CLAMP_TO_BORDER {
-            self.wrapmode = gl::CLAMP_TO_EDGE;
+            self.wrapmode = gl::MIRROR_CLAMP_TO_EDGE;
         } else {
             self.wrapmode = gl::CLAMP_TO_BORDER;
         };

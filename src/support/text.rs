@@ -10,7 +10,7 @@ pub struct TextOverlay {
     dirty: bool,
     buffer_width: i32,
     buffer_height: i32,
-    screen_buffer: String,
+    screen_buffer: Vec<char>,
     cursor_x: u32,
     cursor_y: u32,
 }
@@ -38,6 +38,10 @@ impl TextOverlay {
         self.buffer_width = width;
         self.buffer_height = height;
 
+        let buffer_size = width as usize * height as usize;
+        self.screen_buffer = Vec::with_capacity(buffer_size);
+        self.screen_buffer.resize(buffer_size, ' ');
+
         unsafe {
             gl::GenVertexArrays(1, &mut self.vao);
             gl::BindVertexArray(self.vao);
@@ -55,7 +59,6 @@ impl TextOverlay {
 
         let (_, data) = load_ktx!("../../assets/textures/cp437_9x16.ktx").unwrap();
         self.font_texture = prepare_texture(&data);
-        self.clear();
     }
 
     pub fn render(&mut self) {
@@ -64,6 +67,7 @@ impl TextOverlay {
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, self.vbo);
         }
+        let buffer = self.screen_buffer.iter().cloned().collect::<String>();
         if self.dirty {
             unsafe {
                 gl::TexSubImage2D(
@@ -75,8 +79,8 @@ impl TextOverlay {
                     self.buffer_height as i32,
                     gl::RED_INTEGER,
                     gl::UNSIGNED_BYTE,
-                    self.screen_buffer.as_ptr() as *const GLvoid,
-                )
+                    buffer.as_ptr() as *const GLvoid,
+                );
             }
             self.dirty = false;
         }
@@ -92,12 +96,13 @@ impl TextOverlay {
     pub fn draw_text(&mut self, text: String, x_position: i32, y_position: i32) {
         let index = (y_position * self.buffer_width + x_position) as usize;
         self.dirty = true;
-        // self.screen_buffer.insert_str(index, &text);
-        self.screen_buffer = "@".repeat(self.screen_buffer.len());
+        for (position, glyph) in text.chars().enumerate() {
+            self.screen_buffer[index + position] = glyph;
+        }
     }
 
     pub fn clear(&mut self) {
-        self.screen_buffer = " ".repeat(self.buffer_width as usize * self.buffer_height as usize);
+        self.screen_buffer.resize(self.screen_buffer.len(), ' ');
         self.dirty = true;
         self.cursor_x = 0;
         self.cursor_y = 0;

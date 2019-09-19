@@ -67,7 +67,6 @@ impl TextOverlay {
             gl::ActiveTexture(gl::TEXTURE0);
             gl::BindTexture(gl::TEXTURE_2D, self.vbo);
         }
-        let buffer = self.screen_buffer.iter().cloned().collect::<String>();
         if self.dirty {
             unsafe {
                 gl::TexSubImage2D(
@@ -79,7 +78,7 @@ impl TextOverlay {
                     self.buffer_height as i32,
                     gl::RED_INTEGER,
                     gl::UNSIGNED_BYTE,
-                    buffer.as_ptr() as *const GLvoid,
+                    self.screen_buffer.as_ptr() as *const GLvoid,
                 );
             }
             self.dirty = false;

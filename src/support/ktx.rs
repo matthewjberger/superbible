@@ -269,11 +269,11 @@ fn prepare_texture_2d_array(ktx_texture: &KtxData) {
     }
 }
 
-fn prepare_texture_cube_map(ktx_texture: &KtxData) {
+fn prepare_texture_cube_map(_ktx_texture: &KtxData) {
     unimplemented!()
 }
 
-fn prepare_texture_cube_map_array(ktx_texture: &KtxData) {
+fn prepare_texture_cube_map_array(_ktx_texture: &KtxData) {
     unimplemented!()
 }
 

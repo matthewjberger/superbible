@@ -17,3 +17,4 @@ void main(void)
         discard;
     o_color = vec4(1.0);
 }
+

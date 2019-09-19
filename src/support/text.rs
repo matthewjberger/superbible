@@ -92,8 +92,8 @@ impl TextOverlay {
     pub fn draw_text(&mut self, text: String, x_position: i32, y_position: i32) {
         let index = (y_position * self.buffer_width + x_position) as usize;
         self.dirty = true;
-        self.screen_buffer.insert_str(index, &text);
-        println!("{:?}", self.screen_buffer.trim_end_matches(' '));
+        // self.screen_buffer.insert_str(index, &text);
+        self.screen_buffer = "@".repeat(self.screen_buffer.len());
     }
 
     pub fn clear(&mut self) {

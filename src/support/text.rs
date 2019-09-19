@@ -93,7 +93,7 @@ impl TextOverlay {
         let index = (y_position * self.buffer_width + x_position) as usize;
         self.dirty = true;
         self.screen_buffer.insert_str(index, &text);
-        println!("{:?}", self.screen_buffer.trim_end_matches(" "));
+        println!("{:?}", self.screen_buffer.trim_end_matches(' '));
     }
 
     pub fn clear(&mut self) {

@@ -1,4 +1,4 @@
-use gl::types::GLvoid;
+use gl::types::{GLenum, GLvoid};
 use nom::{
     bytes::complete::{tag, take},
     combinator::rest,
@@ -80,15 +80,56 @@ pub fn parse_ktx<'a>(input: &'a [u8]) -> IResult<&'a [u8], KtxData> {
 }
 
 pub fn prepare_texture(ktx_texture: &KtxData) -> u32 {
-    let ktx = &ktx_texture.header;
-    let image = &ktx_texture.pixels;
+    let target = determine_target(&ktx_texture);
     let mut texture = 0;
     unsafe {
         gl::GenTextures(1, &mut texture);
-        gl::BindTexture(gl::TEXTURE_2D, texture);
+        gl::BindTexture(target, texture);
+    }
 
+    match target {
+        gl::TEXTURE_1D => prepare_texture_1d(ktx_texture),
+        gl::TEXTURE_2D => prepare_texture_2d(ktx_texture),
+        _ => {} // TODO: This should be an error
+    }
+
+    texture
+}
+
+fn prepare_texture_1d(ktx_texture: &KtxData) {
+    let ktx = &ktx_texture.header;
+    let image = &ktx_texture.pixels;
+    let target = gl::TEXTURE_1D;
+
+    unsafe {
+        gl::TexStorage1D(
+            target,
+            ktx.mip_levels as i32,
+            ktx.gl_internal_format,
+            ktx.pixel_width as i32,
+        );
+        gl::TexSubImage1D(
+            target,
+            0,
+            0,
+            ktx.pixel_width as i32,
+            ktx.gl_format,
+            ktx.gl_internal_format,
+            image.as_ptr() as *const GLvoid,
+        );
+    }
+}
+
+fn prepare_texture_2d(ktx_texture: &KtxData) {
+    let ktx = &ktx_texture.header;
+    let image = &ktx_texture.pixels;
+    let target = gl::TEXTURE_2D;
+    let mut image_ptr = image.as_ptr() as *const GLvoid;
+    let mut width = ktx.pixel_width as i32;
+    let mut height = ktx.pixel_height as i32;
+    unsafe {
         gl::TexStorage2D(
-            gl::TEXTURE_2D,
+            target,
             ktx.mip_levels as i32,
             ktx.gl_internal_format,
             ktx.pixel_width as i32,
@@ -96,14 +137,12 @@ pub fn prepare_texture(ktx_texture: &KtxData) -> u32 {
         );
 
         gl::PixelStorei(gl::UNPACK_ALIGNMENT, 1);
+    }
 
-        let mut image_ptr = image.as_ptr() as *const GLvoid;
-        let mut width = ktx.pixel_width as i32;
-        let mut height = ktx.pixel_height as i32;
-
-        for level in 0..ktx.mip_levels {
+    for level in 0..ktx.mip_levels {
+        unsafe {
             gl::TexSubImage2D(
-                gl::TEXTURE_2D,
+                target,
                 level as i32,
                 0,
                 0,
@@ -113,24 +152,28 @@ pub fn prepare_texture(ktx_texture: &KtxData) -> u32 {
                 ktx.gl_type,
                 image_ptr,
             );
+        }
 
-            let stride = calculate_stride(&ktx_texture, width, 1);
+        let stride = calculate_stride(&ktx_texture, width, 1);
+        // TODO: Find a safe way to do this.
+        unsafe {
             image_ptr = image_ptr.offset(height as isize * stride);
-            height >>= 1;
-            width >>= 1;
-            if height == 0 {
-                height = 1;
-            }
-            if width == 0 {
-                width = 1;
-            }
+        }
+        height >>= 1;
+        width >>= 1;
+        if height == 0 {
+            height = 1;
+        }
+        if width == 0 {
+            width = 1;
         }
 
         if ktx.mip_levels == 1 {
-            gl::GenerateMipmap(gl::TEXTURE_2D);
+            unsafe {
+                gl::GenerateMipmap(target);
+            }
         }
     }
-    texture
 }
 
 fn calculate_stride(ktx_texture: &KtxData, width: i32, pad: usize) -> isize {
@@ -143,4 +186,29 @@ fn calculate_stride(ktx_texture: &KtxData, width: i32, pad: usize) -> isize {
         _ => 0,
     };
     (((ktx.gl_type_size * channels * width as u32) as usize + (pad - 1)) & !(pad - 1)) as isize
+}
+
+fn determine_target(ktx_texture: &KtxData) -> GLenum {
+    let ktx = &ktx_texture.header;
+    if ktx.pixel_height == 0 {
+        if ktx.array_elements == 0 {
+            gl::TEXTURE_1D
+        } else {
+            gl::TEXTURE_1D_ARRAY
+        }
+    } else if ktx.pixel_depth == 0 {
+        if ktx.array_elements == 0 {
+            if ktx.faces == 0 {
+                gl::TEXTURE_2D
+            } else {
+                gl::TEXTURE_CUBE_MAP
+            }
+        } else if ktx.faces == 0 {
+            gl::TEXTURE_2D_ARRAY
+        } else {
+            gl::TEXTURE_CUBE_MAP_ARRAY
+        }
+    } else {
+        gl::TEXTURE_3D
+    }
 }

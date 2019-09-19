@@ -242,7 +242,7 @@ fn prepare_texture_1d_array(ktx_texture: &KtxData) {
 fn prepare_texture_2d_array(ktx_texture: &KtxData) {
     let ktx = &ktx_texture.header;
     let image = &ktx_texture.pixels;
-    let target = gl::TEXTURE_1D_ARRAY;
+    let target = gl::TEXTURE_2D_ARRAY;
 
     unsafe {
         gl::TexStorage3D(

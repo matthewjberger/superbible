@@ -59,8 +59,7 @@ impl App for DemoApp {
             gl::BindVertexArray(vao);
         }
 
-        let (width, height) = window.get_size();
-        self.text_overlay.initialize(width, height);
+        self.text_overlay.initialize(80, 50);
     }
 
     fn render(&mut self, _: f32) {

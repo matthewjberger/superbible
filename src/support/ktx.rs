@@ -245,6 +245,7 @@ fn prepare_texture_2d_array(ktx_texture: &KtxData) {
     let target = gl::TEXTURE_2D_ARRAY;
 
     unsafe {
+        gl::PixelStorei(gl::UNPACK_ALIGNMENT, 4);
         gl::TexStorage3D(
             target,
             ktx.mip_levels as i32,

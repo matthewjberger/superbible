@@ -89,8 +89,20 @@ pub fn prepare_texture(ktx_texture: &KtxData) -> u32 {
 
     match target {
         gl::TEXTURE_1D => prepare_texture_1d(ktx_texture),
+        gl::TEXTURE_1D_ARRAY => prepare_texture_1d_array(ktx_texture),
         gl::TEXTURE_2D => prepare_texture_2d(ktx_texture),
+        gl::TEXTURE_2D_ARRAY => prepare_texture_2d_array(ktx_texture),
+        gl::TEXTURE_3D => prepare_texture_3d(ktx_texture),
+        gl::TEXTURE_CUBE_MAP => prepare_texture_cube_map(ktx_texture),
+        gl::TEXTURE_CUBE_MAP_ARRAY => prepare_texture_cube_map_array(ktx_texture),
         _ => {} // TODO: This should be an error
+    }
+
+    let ktx = &ktx_texture.header;
+    if ktx.mip_levels == 1 {
+        unsafe {
+            gl::GenerateMipmap(target);
+        }
     }
 
     texture
@@ -167,13 +179,102 @@ fn prepare_texture_2d(ktx_texture: &KtxData) {
         if width == 0 {
             width = 1;
         }
-
-        if ktx.mip_levels == 1 {
-            unsafe {
-                gl::GenerateMipmap(target);
-            }
-        }
     }
+}
+
+fn prepare_texture_3d(ktx_texture: &KtxData) {
+    let ktx = &ktx_texture.header;
+    let image = &ktx_texture.pixels;
+    let target = gl::TEXTURE_3D;
+
+    unsafe {
+        gl::TexStorage3D(
+            target,
+            ktx.mip_levels as i32,
+            ktx.gl_internal_format,
+            ktx.pixel_width as i32,
+            ktx.pixel_height as i32,
+            ktx.pixel_depth as i32,
+        );
+        gl::TexSubImage3D(
+            target,
+            0,
+            0,
+            0,
+            0,
+            ktx.pixel_width as i32,
+            ktx.pixel_height as i32,
+            ktx.pixel_depth as i32,
+            ktx.gl_format,
+            ktx.gl_type,
+            image.as_ptr() as *const GLvoid,
+        );
+    }
+}
+
+fn prepare_texture_1d_array(ktx_texture: &KtxData) {
+    let ktx = &ktx_texture.header;
+    let image = &ktx_texture.pixels;
+    let target = gl::TEXTURE_1D_ARRAY;
+
+    unsafe {
+        gl::TexStorage2D(
+            target,
+            ktx.mip_levels as i32,
+            ktx.gl_internal_format,
+            ktx.pixel_width as i32,
+            ktx.array_elements as i32,
+        );
+        gl::TexSubImage2D(
+            target,
+            0,
+            0,
+            0,
+            ktx.pixel_width as i32,
+            ktx.array_elements as i32,
+            ktx.gl_format,
+            ktx.gl_type,
+            image.as_ptr() as *const GLvoid,
+        );
+    }
+}
+
+fn prepare_texture_2d_array(ktx_texture: &KtxData) {
+    let ktx = &ktx_texture.header;
+    let image = &ktx_texture.pixels;
+    let target = gl::TEXTURE_1D_ARRAY;
+
+    unsafe {
+        gl::TexStorage3D(
+            target,
+            ktx.mip_levels as i32,
+            ktx.gl_internal_format,
+            ktx.pixel_width as i32,
+            ktx.pixel_height as i32,
+            ktx.array_elements as i32,
+        );
+        gl::TexSubImage3D(
+            target,
+            0,
+            0,
+            0,
+            0,
+            ktx.pixel_width as i32,
+            ktx.pixel_height as i32,
+            ktx.array_elements as i32,
+            ktx.gl_format,
+            ktx.gl_type,
+            image.as_ptr() as *const GLvoid,
+        );
+    }
+}
+
+fn prepare_texture_cube_map(ktx_texture: &KtxData) {
+    unimplemented!()
+}
+
+fn prepare_texture_cube_map_array(ktx_texture: &KtxData) {
+    unimplemented!()
 }
 
 fn calculate_stride(ktx_texture: &KtxData, width: i32, pad: usize) -> isize {

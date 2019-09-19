@@ -93,7 +93,9 @@ impl TextOverlay {
     }
 
     pub fn clear(&mut self) {
-        self.screen_buffer.resize(self.screen_buffer.len(), ' ');
+        let length = self.screen_buffer.len();
+        self.screen_buffer.clear();
+        self.screen_buffer.resize(length, ' ');
         self.dirty = true;
     }
 }

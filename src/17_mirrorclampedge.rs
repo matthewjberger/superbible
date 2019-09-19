@@ -46,7 +46,7 @@ impl DemoApp {
 }
 
 impl App for DemoApp {
-    fn initialize(&mut self, window: &mut glfw::Window) {
+    fn initialize(&mut self, _: &mut glfw::Window) {
         self.load_shaders();
         // NOTE: The 'flare.ktx' texture doesn't load properly in the sb7 example code
         //       or here. It's likely to just be a broken asset.
@@ -75,8 +75,15 @@ impl App for DemoApp {
 
             gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
         }
+
+        let message = if self.wrapmode == gl::CLAMP_TO_BORDER {
+            "Mode = GL_CLAMP_TO_BORDER (M toggles)".to_string()
+        } else {
+            "Mode = GL_MIRROR_CLAMP_TO_EDGE (M toggles)".to_string()
+        };
+
         self.text_overlay.clear();
-        self.text_overlay.draw_text("Testing!".to_string(), 0, 0);
+        self.text_overlay.draw_text(message, 0, 0);
         self.text_overlay.render();
     }
 

@@ -8,6 +8,7 @@ edition = "2018"
 glfw = "0.28.0"
 gl = "0.12.0"
 nom = "5.0.0"
+rand = "0.7.2"
 
 [dependencies.cgmath]
 version = "0.17.0"
@@ -89,3 +90,8 @@ path = "src/16_wrapmodes.rs"
 [[bin]]
 name = "mirrorclampedge"
 path = "src/17_mirrorclampedge.rs"
+
+[[bin]]
+name = "alien-rain"
+path = "src/18_alienrain.rs"
+

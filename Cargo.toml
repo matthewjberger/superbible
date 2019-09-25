@@ -5,9 +5,9 @@ authors = ["Matthew J. Berger <matthewberger@nevada.unr.edu>"]
 edition = "2018"
 
 [dependencies]
-glfw = "0.28.0"
-gl = "0.12.0"
-nom = "5.0.0"
+glfw = "0.32.0"
+gl = "0.13.0"
+nom = "5.0.1"
 rand = "0.7.2"
 
 [dependencies.cgmath]

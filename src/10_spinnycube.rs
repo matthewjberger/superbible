@@ -78,7 +78,7 @@ impl DemoApp {
         self.shader_program = ShaderProgram::new();
         self.shader_program
             .vertex_shader("assets/shaders/spinny-cube/spinny-cube.vs.glsl")
-            .fragment_shader("assets/shaders/fragment-shader/fragment-shader.fs.glsl")
+            .fragment_shader("assets/shaders/spinny-cube/spinny-cube.fs.glsl")
             .link();
     }
 
@@ -126,6 +126,17 @@ impl App for DemoApp {
         let projection_matrix_location = self.shader_program.uniform_location("projection_matrix");
         let projection = perspective(Deg(50.0), self.aspect_ratio, 0.1_f32, 1000_f32);
 
+        let factor: f32 = current_time * 0.3;
+
+        let modelview = Matrix4::from_translation(vec3(0.0, 0.0, -4.0))
+            * Matrix4::from_axis_angle(vec3(0.0, 1.0, 0.0).normalize(), Deg(current_time * 45_f32))
+            * Matrix4::from_axis_angle(vec3(1.0, 0.0, 0.0).normalize(), Deg(current_time * 21_f32))
+            * Matrix4::from_translation(vec3(
+                (2.1 * factor).sin() * 0.5,
+                (1.7 * factor).cos() * 0.5,
+                (1.3 * factor).sin() * (1.5 * factor).cos() * 2.0,
+            ));
+
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, BACKGROUND_COLOR as *const f32);
             gl::ClearBufferfv(gl::DEPTH, 0, ONES as *const f32);
@@ -136,23 +147,6 @@ impl App for DemoApp {
                 gl::FALSE,
                 projection.as_ptr(),
             );
-
-            let factor: f32 = current_time * 0.3;
-
-            let modelview = Matrix4::from_translation(vec3(0.0, 0.0, -4.0))
-                * Matrix4::from_axis_angle(
-                    vec3(0.0, 1.0, 0.0).normalize(),
-                    Deg(current_time * 45_f32),
-                )
-                * Matrix4::from_axis_angle(
-                    vec3(1.0, 0.0, 0.0).normalize(),
-                    Deg(current_time * 21_f32),
-                )
-                * Matrix4::from_translation(vec3(
-                    (2.1 * factor).sin() * 0.5,
-                    (1.7 * factor).cos() * 0.5,
-                    (1.3 * factor).sin() * (1.5 * factor).cos() * 2.0,
-                ));
 
             gl::UniformMatrix4fv(modelview_matrix_location, 1, gl::FALSE, modelview.as_ptr());
 

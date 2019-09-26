@@ -137,24 +137,26 @@ impl App for DemoApp {
                 gl::FALSE,
                 projection.as_ptr(),
             );
+        }
 
-            for cube_id in 0..24 {
-                let factor: f32 = cube_id as f32 + current_time * 0.3;
-                let modelview = Matrix4::from_translation(vec3(0.0, 0.0, -4.0))
-                    * Matrix4::from_axis_angle(
-                        vec3(0.0, 1.0, 0.0).normalize(),
-                        Deg(current_time * 45_f32),
-                    )
-                    * Matrix4::from_axis_angle(
-                        vec3(1.0, 0.0, 0.0).normalize(),
-                        Deg(current_time * 21_f32),
-                    )
-                    * Matrix4::from_translation(vec3(
-                        (2.1 * factor).sin() * 2.0,
-                        (1.7 * factor).cos() * 2.0,
-                        (1.3 * factor).sin() * (1.5 * factor).cos() * 2.0,
-                    ));
+        for cube_id in 0..24 {
+            let factor: f32 = cube_id as f32 + current_time * 0.3;
+            let modelview = Matrix4::from_translation(vec3(0.0, 0.0, -4.0))
+                * Matrix4::from_axis_angle(
+                    vec3(0.0, 1.0, 0.0).normalize(),
+                    Deg(current_time * 45_f32),
+                )
+                * Matrix4::from_axis_angle(
+                    vec3(1.0, 0.0, 0.0).normalize(),
+                    Deg(current_time * 21_f32),
+                )
+                * Matrix4::from_translation(vec3(
+                    (2.1 * factor).sin() * 2.0,
+                    (1.7 * factor).cos() * 2.0,
+                    (1.3 * factor).sin() * (1.5 * factor).cos() * 2.0,
+                ));
 
+            unsafe {
                 gl::UniformMatrix4fv(modelview_matrix_location, 1, gl::FALSE, modelview.as_ptr());
                 gl::DrawArrays(gl::TRIANGLES, 0, 36);
             }

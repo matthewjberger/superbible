@@ -142,12 +142,12 @@ impl App for DemoApp {
 
             barrier();
             render_all(&self.object);
-            barrier();
 
+            barrier();
             self.resolve_program.activate();
             gl::BindVertexArray(self.vao);
-            barrier();
 
+            barrier();
             gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
         }
     }

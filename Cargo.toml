@@ -98,3 +98,7 @@ path = "src/18_alienrain.rs"
 name = "fragment-list"
 path = "src/19_fragmentlist.rs"
 
+[[bin]]
+name = "grass"
+path = "src/20_grass.rs"
+

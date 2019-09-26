@@ -15,30 +15,15 @@ impl DemoApp {
     }
 
     fn load_shaders(&mut self) {
-        let mut vertex_shader = Shader::new(ShaderType::Vertex);
-        vertex_shader.load_file("assets/shaders/geometry-shader/geometry-shader.vs.glsl");
-
-        let mut tessellation_control_shader = Shader::new(ShaderType::TessellationControl);
-        tessellation_control_shader
-            .load_file("assets/shaders/geometry-shader/geometry-shader.tcs.glsl");
-
-        let mut tessellation_evaluation_shader = Shader::new(ShaderType::TessellationEvaluation);
-        tessellation_evaluation_shader
-            .load_file("assets/shaders/geometry-shader/geometry-shader.tes.glsl");
-
-        let mut geometry_shader = Shader::new(ShaderType::Geometry);
-        geometry_shader.load_file("assets/shaders/geometry-shader/geometry-shader.gs.glsl");
-
-        let mut fragment_shader = Shader::new(ShaderType::Fragment);
-        fragment_shader.load_file("assets/shaders/geometry-shader/geometry-shader.fs.glsl");
-
         self.shader_program = ShaderProgram::new();
+
+        #[rustfmt::skip]
         self.shader_program
-            .attach(vertex_shader)
-            .attach(tessellation_control_shader)
-            .attach(tessellation_evaluation_shader)
-            .attach(geometry_shader)
-            .attach(fragment_shader)
+            .vertex_shader("assets/shaders/tessellated-triangle/tessellated-triangle.vs.glsl")
+            .tessellation_control_shader("assets/shaders/tessellated-triangle/tessellated-triangle.tcs.glsl")
+            .tessellation_evaluation_shader("assets/shaders/geometry-shader/geometry-shader.tes.glsl")
+            .geometry_shader("assets/shaders/geometry-shader/geometry-shader.gs.glsl")
+            .fragment_shader("assets/shaders/geometry-shader/geometry-shader.fs.glsl")
             .link();
     }
 }

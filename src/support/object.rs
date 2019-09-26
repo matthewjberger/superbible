@@ -381,7 +381,6 @@ fn prepare_object(chunks: Vec<ChunkType>) -> Object {
 }
 
 pub fn render_all(object: &Object) {
-    render_object(object, 0, 1, 0);
     for (index, _) in object.sub_objects.iter().enumerate() {
         render_object(object, index as u32, 1, 0);
     }

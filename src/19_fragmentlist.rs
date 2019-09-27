@@ -1,4 +1,4 @@
-use cgmath::{perspective, vec3, Deg, Matrix, Matrix4, Point3, Vector4};
+use cgmath::{perspective, vec3, Deg, Matrix, Matrix4, Point3};
 use std::{cmp, mem, ptr};
 use support::app::*;
 use support::load_object;

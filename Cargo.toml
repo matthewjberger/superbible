@@ -102,3 +102,7 @@ path = "src/19_fragmentlist.rs"
 name = "grass"
 path = "src/20_grass.rs"
 
+[[bin]]
+name = "instanced-attribs"
+path = "src/21_instancedattribs.rs"
+

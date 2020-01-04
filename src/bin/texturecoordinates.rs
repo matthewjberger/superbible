@@ -122,12 +122,12 @@ impl App for DemoApp {
         self.update_aspect_ratio(width, height);
         self.load_shaders();
 
-        let (_, data) = load_ktx!("../assets/textures/pattern1.ktx").unwrap();
+        let (_, data) = load_ktx!("../../assets/textures/pattern1.ktx").unwrap();
         self.texture_1 = prepare_texture(&data);
         self.texture_2 = create_procedural_texture();
         self.bind_texture(self.texture_1);
 
-        let (_, obj) = load_object!("../assets/objects/torus_nrms_tc.sbm").unwrap();
+        let (_, obj) = load_object!("../../assets/objects/torus_nrms_tc.sbm").unwrap();
         self.object = obj;
 
         unsafe {

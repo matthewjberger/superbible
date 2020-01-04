@@ -37,7 +37,7 @@ impl DemoApp {
 impl App for DemoApp {
     fn initialize(&mut self, _: &mut glfw::Window) {
         self.load_shaders();
-        let (_, data) = load_ktx!("../assets/textures/rightarrows.ktx").unwrap();
+        let (_, data) = load_ktx!("../../assets/textures/rightarrows.ktx").unwrap();
         let mut vao = 0;
         let texture = prepare_texture(&data);
         unsafe {

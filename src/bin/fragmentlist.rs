@@ -62,7 +62,7 @@ impl App for DemoApp {
         self.update_aspect_ratio(width, height);
         self.load_shaders();
 
-        let (_, obj) = load_object!("../assets/objects/dragon.sbm").unwrap();
+        let (_, obj) = load_object!("../../assets/objects/dragon.sbm").unwrap();
         self.object = obj;
 
         unsafe {

@@ -31,7 +31,7 @@ impl DemoApp {
 impl App for DemoApp {
     fn initialize(&mut self, _: &mut glfw::Window) {
         self.load_shaders();
-        let (_, data) = load_ktx!("../assets/textures/tree.ktx").unwrap();
+        let (_, data) = load_ktx!("../../assets/textures/tree.ktx").unwrap();
         self.texture = prepare_texture(&data);
         unsafe {
             gl::GenVertexArrays(1, &mut self.vao);

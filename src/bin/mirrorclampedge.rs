@@ -45,7 +45,7 @@ impl App for DemoApp {
         // NOTE: The 'flare.ktx' texture doesn't load properly in the sb7 example code
         //       or here. It's likely to just be a broken asset.
         //       The concept here can still be demonstrated with any other texture however.
-        let (_, data) = load_ktx!("../assets/textures/star.ktx").unwrap();
+        let (_, data) = load_ktx!("../../assets/textures/star.ktx").unwrap();
         self.texture = prepare_texture(&data);
         let mut vao = 0;
         unsafe {

@@ -85,26 +85,26 @@ impl App for DemoApp {
         unsafe {
             gl::ActiveTexture(gl::TEXTURE1);
         }
-        let (_, texture_length) = load_ktx!("../assets/textures/grass_length.ktx").unwrap();
+        let (_, texture_length) = load_ktx!("../../assets/textures/grass_length.ktx").unwrap();
         self.texture_length = prepare_texture(&texture_length);
 
         unsafe {
             gl::ActiveTexture(gl::TEXTURE2);
         }
         let (_, texture_orientation) =
-            load_ktx!("../assets/textures/grass_orientation.ktx").unwrap();
+            load_ktx!("../../assets/textures/grass_orientation.ktx").unwrap();
         self.texture_orientation = prepare_texture(&texture_orientation);
 
         unsafe {
             gl::ActiveTexture(gl::TEXTURE3);
         }
-        let (_, texture_color) = load_ktx!("../assets/textures/grass_color.ktx").unwrap();
+        let (_, texture_color) = load_ktx!("../../assets/textures/grass_color.ktx").unwrap();
         self.texture_color = prepare_texture(&texture_color);
 
         unsafe {
             gl::ActiveTexture(gl::TEXTURE4);
         }
-        let (_, texture_bend) = load_ktx!("../assets/textures/grass_bend.ktx").unwrap();
+        let (_, texture_bend) = load_ktx!("../../assets/textures/grass_bend.ktx").unwrap();
         self.texture_bend = prepare_texture(&texture_bend);
     }
 

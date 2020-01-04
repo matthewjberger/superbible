@@ -51,9 +51,9 @@ impl App for DemoApp {
         self.uniform_loc_mvp = self.shader_program.uniform_location("mvp");
         self.uniform_loc_offset = self.shader_program.uniform_location("offset");
 
-        let (_, brick) = load_ktx!("../assets/textures/brick.ktx").unwrap();
-        let (_, ceiling) = load_ktx!("../assets/textures/ceiling.ktx").unwrap();
-        let (_, floor) = load_ktx!("../assets/textures/floor.ktx").unwrap();
+        let (_, brick) = load_ktx!("../../assets/textures/brick.ktx").unwrap();
+        let (_, ceiling) = load_ktx!("../../assets/textures/ceiling.ktx").unwrap();
+        let (_, floor) = load_ktx!("../../assets/textures/floor.ktx").unwrap();
 
         let wall_texture = prepare_texture(&brick);
         self.textures = vec![

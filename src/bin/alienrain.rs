@@ -42,7 +42,7 @@ impl App for DemoApp {
     fn initialize(&mut self, _: &mut glfw::Window) {
         self.load_shaders();
 
-        let (_, data) = load_ktx!("../assets/textures/aliens.ktx").unwrap();
+        let (_, data) = load_ktx!("../../assets/textures/aliens.ktx").unwrap();
         self.alien_textures = prepare_texture(&data);
 
         let mut vao = 0;

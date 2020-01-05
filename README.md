@@ -18,6 +18,8 @@ the OpenGL Superbible's 7th edition in rust.
     - [Spinny Cubes](#spinny-cubes)
     - [Textured Triangle](#textured-triangle)
     - [KTX Viewer](#ktx-viewer)
+    
+> More examples are available than the ones listed in the readme. Storing a lot of gifs would bloat the repo, so only a few are displayed here.
 
 ## Instructions
 

@@ -111,7 +111,7 @@ fn bytes_to_string(bytes: &[u8]) -> String {
 }
 
 #[rustfmt::skip]
-fn chunk<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], ChunkType, E> {
+fn chunk<E: ParseError<&'static [u8]> + nom::error::ContextError<&'static [u8]>>(input: &'static [u8]) -> IResult<&'static [u8], ChunkType, E> {
     context(
         "Chunk",
         cut(alt((
@@ -140,7 +140,9 @@ fn chunk<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], Chun
     )(input)
 }
 
-fn chunk_header<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], ChunkHeader, E> {
+fn chunk_header<E: ParseError<&'static [u8]> + nom::error::ContextError<&'static [u8]>>(
+    input: &'static [u8],
+) -> IResult<&'static [u8], ChunkHeader, E> {
     context(
         "Chunk Header",
         cut(map(
@@ -153,7 +155,9 @@ fn chunk_header<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8
     )(input)
 }
 
-fn index_data<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], IndexData, E> {
+fn index_data<E: ParseError<&'static [u8]> + nom::error::ContextError<&'static [u8]>>(
+    input: &'static [u8],
+) -> IResult<&'static [u8], IndexData, E> {
     let (input, _) = chunk_header(input)?;
     context(
         "IndexData",
@@ -168,7 +172,9 @@ fn index_data<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8],
     )(input)
 }
 
-fn comment<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], String, E> {
+fn comment<E: ParseError<&'static [u8]> + nom::error::ContextError<&'static [u8]>>(
+    input: &'static [u8],
+) -> IResult<&'static [u8], String, E> {
     let (input, header) = chunk_header(input)?;
     context(
         "Comment",
@@ -179,7 +185,9 @@ fn comment<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], St
     )(input)
 }
 
-fn data<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], Data, E> {
+fn data<E: ParseError<&'static [u8]> + nom::error::ContextError<&'static [u8]>>(
+    input: &'static [u8],
+) -> IResult<&'static [u8], Data, E> {
     let (input, _) = chunk_header(input)?;
     context(
         "Data",
@@ -194,14 +202,16 @@ fn data<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], Data,
     )(input)
 }
 
-fn vertex_data<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8], VertexData, E> {
+fn vertex_data<E: ParseError<&'static [u8]> + nom::error::ContextError<&'static [u8]>>(
+    input: &'static [u8],
+) -> IResult<&'static [u8], VertexData, E> {
     let (input, _) = chunk_header(input)?;
     let (input, data_size) = le_u32(input)?;
     context(
         "Vertex Data",
         cut(map(
             tuple((le_u32, le_u32, take(data_size as usize))),
-            |(data_offset, total_vertices, vertices)| VertexData {
+            |(data_offset, total_vertices, vertices): (u32, u32, &[u8])| VertexData {
                 data_size: (vertices.len() * mem::size_of::<u8>()) as GLsizeiptr,
                 data_offset,
                 total_vertices,
@@ -211,9 +221,9 @@ fn vertex_data<'a, E: ParseError<&'a [u8]>>(input: &'a [u8]) -> IResult<&'a [u8]
     )(input)
 }
 
-fn vertex_attributes<'a, E: ParseError<&'a [u8]>>(
-    input: &'a [u8],
-) -> IResult<&'a [u8], Vec<VertexAttribute>, E> {
+fn vertex_attributes<E: ParseError<&'static [u8]> + nom::error::ContextError<&'static [u8]>>(
+    input: &'static [u8],
+) -> IResult<&'static [u8], Vec<VertexAttribute>, E> {
     let (input, _) = chunk_header(input)?;
     let (input, num_attributes) = le_u32(input)?;
     context(
@@ -243,9 +253,9 @@ fn vertex_attributes<'a, E: ParseError<&'a [u8]>>(
     )(input)
 }
 
-fn sub_objects<'a, E: ParseError<&'a [u8]>>(
-    input: &'a [u8],
-) -> IResult<&'a [u8], Vec<SubObject>, E> {
+fn sub_objects<E: ParseError<&'static [u8]> + nom::error::ContextError<&'static [u8]>>(
+    input: &'static [u8],
+) -> IResult<&'static [u8], Vec<SubObject>, E> {
     let (input, _) = chunk_header(input)?;
     let (input, num_objects) = le_u32(input)?;
     context(
@@ -261,7 +271,7 @@ fn sub_objects<'a, E: ParseError<&'a [u8]>>(
     )(input)
 }
 
-pub fn parse_object<'a>(input: &'a [u8]) -> IResult<&'a [u8], Object> {
+pub fn parse_object(input: &'static [u8]) -> IResult<&'static [u8], Object> {
     let (input, _) = alt((
         tag(HEADER_TAG),                                              // Little Endian
         tag(HEADER_TAG.chars().rev().collect::<String>().as_bytes()), // Big Endian

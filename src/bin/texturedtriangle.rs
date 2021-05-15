@@ -1,5 +1,7 @@
-use support::app::*;
-use support::shader::*;
+use anyhow::Result;
+use gl::types::*;
+use glutin::window::Window;
+use support::{app::run_application, app::App, shader::ShaderProgram};
 
 static GREEN: &[GLfloat; 4] = &[0.0, 0.25, 0.0, 1.0];
 
@@ -10,12 +12,6 @@ struct DemoApp {
 }
 
 impl DemoApp {
-    pub fn new() -> DemoApp {
-        DemoApp {
-            ..Default::default()
-        }
-    }
-
     fn load_shaders(&mut self) {
         self.shader_program = ShaderProgram::new();
         self.shader_program
@@ -26,7 +22,7 @@ impl DemoApp {
 }
 
 impl App for DemoApp {
-    fn initialize(&mut self, _: &mut glfw::Window) {
+    fn initialize(&mut self, _window: &Window) -> Result<()> {
         self.load_shaders();
         let (width, height) = (256 as usize, 256 as usize);
         let mut texture = 0;
@@ -82,17 +78,21 @@ impl App for DemoApp {
             gl::GenVertexArrays(1, &mut self.vao);
             gl::BindVertexArray(self.vao);
         }
+
+        Ok(())
     }
 
-    fn render(&mut self, _: f32) {
+    fn render(&mut self, _time: f32) -> Result<()> {
         self.shader_program.activate();
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, GREEN as *const f32);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
         }
+        Ok(())
     }
 }
 
-fn main() {
-    DemoApp::new().run("Textured Triangle");
+fn main() -> Result<()> {
+    let app = DemoApp::default();
+    run_application(app, "Textured Triangle")
 }

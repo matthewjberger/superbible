@@ -1,7 +1,11 @@
-use support::app::*;
-use support::ktx::prepare_texture;
-use support::load_ktx;
-use support::shader::*;
+use anyhow::Result;
+use glutin::window::Window;
+use support::{
+    app::{run_application, App},
+    ktx::prepare_texture,
+    load_ktx,
+    shader::ShaderProgram,
+};
 
 static GREEN: &[GLfloat; 4] = &[0.0, 0.25, 0.0, 1.0];
 
@@ -13,12 +17,6 @@ struct DemoApp {
 }
 
 impl DemoApp {
-    pub fn new() -> DemoApp {
-        DemoApp {
-            ..Default::default()
-        }
-    }
-
     fn load_shaders(&mut self) {
         self.shader_program = ShaderProgram::new();
         self.shader_program
@@ -29,7 +27,7 @@ impl DemoApp {
 }
 
 impl App for DemoApp {
-    fn initialize(&mut self, _: &mut glfw::Window) {
+    fn initialize(&mut self, _window: &Window) -> Result<()> {
         self.load_shaders();
         let (_, data) = load_ktx!("../../assets/textures/tree.ktx").unwrap();
         self.texture = prepare_texture(&data);
@@ -44,18 +42,21 @@ impl App for DemoApp {
                 data.header.pixel_height as i32,
             );
         }
+        Ok(())
     }
 
-    fn render(&mut self, current_time: f32) {
+    fn render(&mut self, time: f32) -> Result<()> {
         self.shader_program.activate();
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, GREEN as *const f32);
-            gl::Uniform1f(0, current_time.sin() as f32 * 16.0 + 16.0);
+            gl::Uniform1f(0, time.sin() as f32 * 16.0 + 16.0);
             gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
         }
+        Ok(())
     }
 }
 
-fn main() {
-    DemoApp::new().run("KTX Viewer");
+fn main() -> Result<()> {
+    let app = DemoApp::default();
+    run_application(app, "KTX Viewer")
 }

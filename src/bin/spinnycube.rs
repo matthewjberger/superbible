@@ -3,7 +3,10 @@ use gl::types::*;
 use glutin::window::Window;
 use nalgebra_glm as glm;
 use std::{cmp, mem, ptr};
-use support::{app::run_application, app::App, shader::ShaderProgram};
+use support::{
+    app::{run_application, App},
+    shader::ShaderProgram,
+};
 
 const BACKGROUND_COLOR: &[GLfloat; 4] = &[0.0, 0.25, 0.0, 1.0];
 const ONES: &[GLfloat; 1] = &[1.0];
@@ -78,7 +81,7 @@ impl DemoApp {
     }
 
     fn update_aspect_ratio(&mut self, width: u32, height: u32) {
-        self.aspect_ratio = width as f32 / cmp::max(height, 0) as f32;
+        self.aspect_ratio = width as f32 / cmp::max(height, 1) as f32;
     }
 }
 
@@ -128,8 +131,8 @@ impl App for DemoApp {
         let factor: f32 = time * 0.3;
 
         let modelview = glm::translation(&glm::vec3(0.0, 0.0, -4.0))
-            * glm::rotation((time * 45_f32).to_radians(), &glm::vec3(0.0, 1.0, 0.0))
-            * glm::rotation((time * 21_f32).to_radians(), &glm::vec3(1.0, 0.0, 0.0))
+            * glm::rotation((time * 45_f32).to_radians(), &glm::Vec3::y())
+            * glm::rotation((time * 21_f32).to_radians(), &glm::Vec3::x())
             * glm::translation(&glm::vec3(
                 (2.1 * factor).sin() * 0.5,
                 (1.7 * factor).cos() * 0.5,

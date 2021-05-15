@@ -1,5 +1,4 @@
-use crate::ktx::*;
-use crate::shader::*;
+use crate::{ktx::*, shader::*};
 
 #[derive(Default)]
 pub struct TextOverlay {
@@ -14,12 +13,6 @@ pub struct TextOverlay {
 }
 
 impl TextOverlay {
-    pub fn new() -> Self {
-        TextOverlay {
-            ..Default::default()
-        }
-    }
-
     pub fn initialize(&mut self, width: i32, height: i32) {
         self.shader_program = ShaderProgram::new();
         self.shader_program

@@ -1,12 +1,15 @@
-use cgmath::prelude::*;
-use cgmath::{perspective, vec3, Deg, Matrix, Matrix4};
+use anyhow::Result;
+use gl::types::*;
+use glutin::{event::ElementState, event::VirtualKeyCode, window::Window};
+use nalgebra_glm as glm;
 use std::cmp;
-use support::app::*;
-use support::ktx::prepare_texture;
-use support::load_ktx;
-use support::load_object;
-use support::object::{render_all, Object};
-use support::shader::*;
+use support::{
+    app::{run_application, App},
+    ktx::prepare_texture,
+    load_ktx, load_object,
+    object::{render_all, Object},
+    shader::ShaderProgram,
+};
 
 const GRAY: &[GLfloat; 4] = &[0.2, 0.2, 0.2, 1.0];
 const ONES: &[GLfloat; 1] = &[1.0];
@@ -58,12 +61,6 @@ struct DemoApp {
 }
 
 impl DemoApp {
-    pub fn new() -> DemoApp {
-        DemoApp {
-            ..Default::default()
-        }
-    }
-
     fn bind_texture(&mut self, texture: u32) {
         self.current_texture = texture;
         unsafe {
@@ -92,33 +89,34 @@ impl DemoApp {
         }
     }
 
-    fn update_aspect_ratio(&mut self, width: i32, height: i32) {
-        self.aspect_ratio = width as f32 / cmp::max(height, 0) as f32;
+    fn update_aspect_ratio(&mut self, width: u32, height: u32) {
+        self.aspect_ratio = width as f32 / cmp::max(height, 1) as f32;
     }
 }
 
 impl App for DemoApp {
-    fn on_resize(&mut self, width: i32, height: i32) {
+    fn on_resize(&mut self, width: u32, height: u32) -> Result<()> {
         self.update_aspect_ratio(width, height);
+        Ok(())
     }
 
-    fn on_key(&mut self, key: Key, action: Action) {
-        if action != glfw::Action::Release {
-            return;
-        }
-        match (key, action) {
-            (glfw::Key::T, glfw::Action::Release) => {
+    fn on_key(&mut self, keycode: &VirtualKeyCode, keystate: &ElementState) -> Result<()> {
+        match (keycode, keystate) {
+            (VirtualKeyCode::T, ElementState::Pressed) => {
                 self.toggle_texture();
             }
-            (glfw::Key::R, glfw::Action::Release) => {
+            (VirtualKeyCode::R, ElementState::Pressed) => {
                 self.load_shaders();
             }
             _ => (),
         }
+
+        Ok(())
     }
 
-    fn initialize(&mut self, window: &mut glfw::Window) {
-        let (width, height) = window.get_size();
+    fn initialize(&mut self, window: &Window) -> Result<()> {
+        let inner_size = window.inner_size();
+        let (width, height) = (inner_size.width, inner_size.height);
         self.update_aspect_ratio(width, height);
         self.load_shaders();
 
@@ -134,9 +132,11 @@ impl App for DemoApp {
             gl::Enable(gl::DEPTH_TEST);
             gl::DepthFunc(gl::LEQUAL);
         }
+
+        Ok(())
     }
 
-    fn render(&mut self, current_time: f32) {
+    fn render(&mut self, time: f32) -> Result<()> {
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, GRAY as *const f32);
             gl::ClearBufferfv(gl::DEPTH, 0, ONES as *const f32);
@@ -146,7 +146,8 @@ impl App for DemoApp {
 
         let modelview_matrix_location = self.shader_program.uniform_location("modelview_matrix");
         let projection_matrix_location = self.shader_program.uniform_location("projection_matrix");
-        let projection = perspective(Deg(60.0), self.aspect_ratio, 0.1_f32, 1000_f32);
+        let projection =
+            glm::perspective(self.aspect_ratio, 60_f32.to_radians(), 0.1_f32, 1000_f32);
 
         unsafe {
             gl::UniformMatrix4fv(
@@ -156,23 +157,20 @@ impl App for DemoApp {
                 projection.as_ptr(),
             );
 
-            let modelview = Matrix4::from_translation(vec3(0.0, 0.0, -3.0))
-                * Matrix4::from_axis_angle(
-                    vec3(0.0, 1.0, 0.0).normalize(),
-                    Deg(current_time * 19.3),
-                )
-                * Matrix4::from_axis_angle(
-                    vec3(0.0, 0.0, 1.0).normalize(),
-                    Deg(current_time * 21.1),
-                );
+            let modelview = glm::translation(&glm::vec3(0.0, 0.0, -3.0))
+                * glm::rotation((time * 19.3).to_radians(), &glm::Vec3::y())
+                * glm::rotation((time * 21.1).to_radians(), &glm::Vec3::z());
 
             gl::UniformMatrix4fv(modelview_matrix_location, 1, gl::FALSE, modelview.as_ptr());
         }
 
         render_all(&self.object);
+
+        Ok(())
     }
 }
 
-fn main() {
-    DemoApp::new().run("Texture Coordinates");
+fn main() -> Result<()> {
+    let app = DemoApp::default();
+    run_application(app, "Texture Coordinates")
 }

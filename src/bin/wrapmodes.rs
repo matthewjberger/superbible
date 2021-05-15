@@ -1,7 +1,12 @@
-use support::app::*;
-use support::ktx::prepare_texture;
-use support::load_ktx;
-use support::shader::*;
+use anyhow::Result;
+use gl::types::*;
+use glutin::window::Window;
+use support::{
+    app::{run_application, App},
+    ktx::prepare_texture,
+    load_ktx,
+    shader::ShaderProgram,
+};
 
 const GREEN: &[GLfloat; 4] = &[0.0, 0.1, 0.0, 1.0];
 const YELLOW: &[GLfloat; 4] = &[0.4, 0.4, 0.0, 1.0];
@@ -19,12 +24,6 @@ struct DemoApp {
 }
 
 impl DemoApp {
-    pub fn new() -> DemoApp {
-        DemoApp {
-            ..Default::default()
-        }
-    }
-
     fn load_shaders(&mut self) {
         self.shader_program = ShaderProgram::new();
         self.shader_program
@@ -35,7 +34,7 @@ impl DemoApp {
 }
 
 impl App for DemoApp {
-    fn initialize(&mut self, _: &mut glfw::Window) {
+    fn initialize(&mut self, _window: &Window) -> Result<()> {
         self.load_shaders();
         let (_, data) = load_ktx!("../../assets/textures/rightarrows.ktx").unwrap();
         let mut vao = 0;
@@ -45,9 +44,10 @@ impl App for DemoApp {
             gl::BindVertexArray(vao);
             gl::BindTexture(gl::TEXTURE_2D, texture);
         }
+        Ok(())
     }
 
-    fn render(&mut self, _: f32) {
+    fn render(&mut self, _time: f32) -> Result<()> {
         self.shader_program.activate();
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, GREEN as *const f32);
@@ -65,9 +65,11 @@ impl App for DemoApp {
                 gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
             }
         }
+        Ok(())
     }
 }
 
-fn main() {
-    DemoApp::new().run("Wrap Modes");
+fn main() -> Result<()> {
+    let app = DemoApp::default();
+    run_application(app, "Wrap Modes")
 }

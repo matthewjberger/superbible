@@ -1,10 +1,14 @@
-use cgmath::prelude::*;
-use cgmath::{perspective, vec3, Deg, Matrix, Matrix4};
+use anyhow::Result;
+use gl::types::*;
+use glutin::window::Window;
+use nalgebra_glm as glm;
 use std::cmp;
-use support::app::*;
-use support::ktx::prepare_texture;
-use support::load_ktx;
-use support::shader::*;
+use support::{
+    app::{run_application, App},
+    ktx::prepare_texture,
+    load_ktx,
+    shader::ShaderProgram,
+};
 
 const BLACK: &[GLfloat; 4] = &[0.0, 0.0, 0.0, 0.0];
 
@@ -19,12 +23,6 @@ struct DemoApp {
 }
 
 impl DemoApp {
-    pub fn new() -> DemoApp {
-        DemoApp {
-            ..Default::default()
-        }
-    }
-
     fn load_shaders(&mut self) {
         self.shader_program = ShaderProgram::new();
         self.shader_program
@@ -33,18 +31,20 @@ impl DemoApp {
             .link();
     }
 
-    fn update_aspect_ratio(&mut self, width: i32, height: i32) {
-        self.aspect_ratio = width as f32 / cmp::max(height, 0) as f32;
+    fn update_aspect_ratio(&mut self, width: u32, height: u32) {
+        self.aspect_ratio = width as f32 / cmp::max(height, 1) as f32;
     }
 }
 
 impl App for DemoApp {
-    fn on_resize(&mut self, width: i32, height: i32) {
+    fn on_resize(&mut self, width: u32, height: u32) -> Result<()> {
         self.update_aspect_ratio(width, height);
+        Ok(())
     }
 
-    fn initialize(&mut self, window: &mut glfw::Window) {
-        let (width, height) = window.get_size();
+    fn initialize(&mut self, window: &Window) -> Result<()> {
+        let inner_size = window.inner_size();
+        let (width, height) = (inner_size.width, inner_size.height);
         self.update_aspect_ratio(width, height);
         self.load_shaders();
 
@@ -79,27 +79,30 @@ impl App for DemoApp {
             gl::GenVertexArrays(1, &mut self.vao);
             gl::BindVertexArray(self.vao);
         }
+
+        Ok(())
     }
 
-    fn render(&mut self, current_time: f32) {
+    fn render(&mut self, time: f32) -> Result<()> {
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, BLACK as *const f32);
         }
 
         self.shader_program.activate();
 
-        let projection_matrix = perspective(Deg(60.0), self.aspect_ratio, 0.1_f32, 1000_f32);
+        let projection_matrix =
+            glm::perspective(self.aspect_ratio, 60_f32.to_radians(), 0.1_f32, 1000_f32);
 
         unsafe {
-            gl::Uniform1f(self.uniform_loc_offset, current_time * 0.003);
+            gl::Uniform1f(self.uniform_loc_offset, time * 0.003);
         }
 
         for (index, texture) in self.textures.iter().enumerate() {
             let modelview_matrix =
-                Matrix4::from_axis_angle(vec3(0.0, 0.0, 1.0).normalize(), Deg(90.0 * index as f32))
-                    * Matrix4::from_translation(vec3(-0.5, 0.0, -10.0))
-                    * Matrix4::from_axis_angle(vec3(0.0, 1.0, 0.0).normalize(), Deg(90.0))
-                    * Matrix4::from_nonuniform_scale(30.0, 1.0, 1.0);
+                glm::rotation((90.0 * index as f32).to_radians(), &glm::Vec3::z())
+                    * glm::translation(&glm::vec3(-0.5, 0.0, -10.0))
+                    * glm::rotation(90_f32.to_radians(), &glm::Vec3::y())
+                    * glm::scaling(&glm::vec3(30.0, 1.0, 1.0));
 
             let mvp_matrix = projection_matrix * modelview_matrix;
 
@@ -109,9 +112,12 @@ impl App for DemoApp {
                 gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
             }
         }
+
+        Ok(())
     }
 }
 
-fn main() {
-    DemoApp::new().run("Tunnel");
+fn main() -> Result<()> {
+    let app = DemoApp::default();
+    run_application(app, "Tunnel")
 }

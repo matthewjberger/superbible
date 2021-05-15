@@ -1,9 +1,11 @@
-use cgmath::{perspective, vec3, Deg, Matrix, Matrix4, Point3};
+use anyhow::Result;
+use gl::types::*;
+use glutin::window::Window;
+use nalgebra_glm as glm;
 use std::{cmp, mem, ptr};
-use support::app::*;
-use support::ktx::prepare_texture;
-use support::load_ktx;
-use support::shader::*;
+use support::{
+    app::run_application, app::App, ktx::prepare_texture, load_ktx, shader::ShaderProgram,
+};
 
 const BLACK: &[GLfloat; 4] = &[0.0, 0.0, 0.0, 1.0];
 const ONES: &[GLfloat; 1] = &[1.0];
@@ -32,12 +34,6 @@ struct DemoApp {
 }
 
 impl DemoApp {
-    pub fn new() -> DemoApp {
-        DemoApp {
-            ..Default::default()
-        }
-    }
-
     fn load_shaders(&mut self) {
         self.shader_program = ShaderProgram::new();
         self.shader_program
@@ -51,18 +47,20 @@ impl DemoApp {
         }
     }
 
-    fn update_aspect_ratio(&mut self, width: i32, height: i32) {
-        self.aspect_ratio = width as f32 / cmp::max(height, 0) as f32;
+    fn update_aspect_ratio(&mut self, width: u32, height: u32) {
+        self.aspect_ratio = width as f32 / cmp::max(height, 1) as f32;
     }
 }
 
 impl App for DemoApp {
-    fn on_resize(&mut self, width: i32, height: i32) {
+    fn on_resize(&mut self, width: u32, height: u32) -> Result<()> {
         self.update_aspect_ratio(width, height);
+        Ok(())
     }
 
-    fn initialize(&mut self, window: &mut glfw::Window) {
-        let (width, height) = window.get_size();
+    fn initialize(&mut self, window: &Window) -> Result<()> {
+        let inner_size = window.inner_size();
+        let (width, height) = (inner_size.width, inner_size.height);
         self.update_aspect_ratio(width, height);
         self.load_shaders();
 
@@ -106,22 +104,25 @@ impl App for DemoApp {
         }
         let (_, texture_bend) = load_ktx!("../../assets/textures/grass_bend.ktx").unwrap();
         self.texture_bend = prepare_texture(&texture_bend);
+
+        Ok(())
     }
 
-    fn render(&mut self, current_time: f32) {
+    fn render(&mut self, time: f32) -> Result<()> {
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, BLACK as *const f32);
             gl::ClearBufferfv(gl::DEPTH, 0, ONES as *const f32);
         }
 
         let radius = 550.0;
-        let factor = current_time * 0.02;
-        let mvp_matrix = perspective(Deg(45.0), self.aspect_ratio, 0.1_f32, 1000_f32)
-            * Matrix4::look_at(
-                Point3::new(factor.sin() * radius, 25.0, factor.cos() * radius),
-                Point3::new(0.0, -50.0, 0.0),
-                vec3(0.0, 1.0, 0.0),
-            );
+        let factor = time * 0.02;
+        let mvp_matrix =
+            glm::perspective(self.aspect_ratio, 45_f32.to_radians(), 0.1_f32, 1000_f32)
+                * glm::look_at(
+                    &glm::vec3(factor.sin() * radius, 25.0, factor.cos() * radius),
+                    &glm::vec3(0.0, -50.0, 0.0),
+                    &glm::Vec3::y(),
+                );
 
         self.shader_program.activate();
 
@@ -134,9 +135,12 @@ impl App for DemoApp {
             gl::BindVertexArray(self.vao);
             gl::DrawArraysInstanced(gl::TRIANGLE_STRIP, 0, 6, 1024 * 1024);
         }
+
+        Ok(())
     }
 }
 
-fn main() {
-    DemoApp::new().run("Grass");
+fn main() -> Result<()> {
+    let app = DemoApp::default();
+    run_application(app, "Grass")
 }

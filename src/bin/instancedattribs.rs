@@ -1,6 +1,8 @@
+use anyhow::Result;
+use gl::types::*;
+use glutin::window::Window;
 use std::{cmp, mem, ptr};
-use support::app::*;
-use support::shader::*;
+use support::{app::run_application, app::App, shader::ShaderProgram};
 
 const BLACK: &[GLfloat; 4] = &[0.0, 0.0, 0.0, 1.0];
 
@@ -39,12 +41,6 @@ struct DemoApp {
 }
 
 impl DemoApp {
-    pub fn new() -> DemoApp {
-        DemoApp {
-            ..Default::default()
-        }
-    }
-
     fn load_shaders(&mut self) {
         self.shader_program = ShaderProgram::new();
         self.shader_program
@@ -53,18 +49,20 @@ impl DemoApp {
             .link();
     }
 
-    fn update_aspect_ratio(&mut self, width: i32, height: i32) {
-        self.aspect_ratio = width as f32 / cmp::max(height, 0) as f32;
+    fn update_aspect_ratio(&mut self, width: u32, height: u32) {
+        self.aspect_ratio = width as f32 / cmp::max(height, 1) as f32;
     }
 }
 
 impl App for DemoApp {
-    fn on_resize(&mut self, width: i32, height: i32) {
+    fn on_resize(&mut self, width: u32, height: u32) -> Result<()> {
         self.update_aspect_ratio(width, height);
+        Ok(())
     }
 
-    fn initialize(&mut self, window: &mut glfw::Window) {
-        let (width, height) = window.get_size();
+    fn initialize(&mut self, window: &Window) -> Result<()> {
+        let inner_size = window.inner_size();
+        let (width, height) = (inner_size.width, inner_size.height);
         self.update_aspect_ratio(width, height);
         self.load_shaders();
 
@@ -136,9 +134,11 @@ impl App for DemoApp {
             gl::VertexAttribDivisor(1, 1);
             gl::VertexAttribDivisor(2, 1);
         }
+
+        Ok(())
     }
 
-    fn render(&mut self, _: f32) {
+    fn render(&mut self, _time: f32) -> Result<()> {
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, BLACK as *const f32);
         }
@@ -147,9 +147,11 @@ impl App for DemoApp {
             gl::BindVertexArray(self.vao);
             gl::DrawArraysInstanced(gl::TRIANGLE_FAN, 0, 4, 4);
         }
+        Ok(())
     }
 }
 
-fn main() {
-    DemoApp::new().run("Instanced Attributes");
+fn main() -> Result<()> {
+    let app = DemoApp::default();
+    run_application(app, "Instanced Attributes")
 }

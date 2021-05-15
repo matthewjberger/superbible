@@ -1,9 +1,14 @@
-use cgmath::{perspective, vec3, Deg, Matrix, Matrix4, Point3};
+use anyhow::Result;
+use gl::types::*;
+use glutin::window::Window;
+use nalgebra_glm as glm;
 use std::{cmp, mem, ptr};
-use support::app::*;
-use support::load_object;
-use support::object::{render_all, Object};
-use support::shader::*;
+use support::{
+    app::{run_application, App},
+    load_object,
+    object::{render_all, Object},
+    shader::ShaderProgram,
+};
 
 #[derive(Default)]
 struct DemoApp {
@@ -20,14 +25,8 @@ struct DemoApp {
 }
 
 impl DemoApp {
-    pub fn new() -> DemoApp {
-        DemoApp {
-            ..Default::default()
-        }
-    }
-
-    fn update_aspect_ratio(&mut self, width: i32, height: i32) {
-        self.aspect_ratio = width as f32 / cmp::max(height, 0) as f32;
+    fn update_aspect_ratio(&mut self, width: u32, height: u32) {
+        self.aspect_ratio = width as f32 / cmp::max(height, 1) as f32;
     }
 
     fn load_shaders(&mut self) {
@@ -53,12 +52,14 @@ impl DemoApp {
 }
 
 impl App for DemoApp {
-    fn on_resize(&mut self, width: i32, height: i32) {
+    fn on_resize(&mut self, width: u32, height: u32) -> Result<()> {
         self.update_aspect_ratio(width, height);
+        Ok(())
     }
 
-    fn initialize(&mut self, window: &mut glfw::Window) {
-        let (width, height) = window.get_size();
+    fn initialize(&mut self, window: &Window) -> Result<()> {
+        let inner_size = window.inner_size();
+        let (width, height) = (inner_size.width, inner_size.height);
         self.update_aspect_ratio(width, height);
         self.load_shaders();
 
@@ -70,7 +71,7 @@ impl App for DemoApp {
             gl::BindBuffer(gl::UNIFORM_BUFFER, self.uniform_buffer);
             gl::BufferData(
                 gl::UNIFORM_BUFFER,
-                (mem::size_of::<Matrix4<f32>>() * 3) as GLsizeiptr,
+                (mem::size_of::<glm::Mat4>() * 3) as GLsizeiptr,
                 ptr::null(),
                 gl::DYNAMIC_DRAW,
             );
@@ -95,21 +96,20 @@ impl App for DemoApp {
             gl::GenVertexArrays(1, &mut self.vao);
             gl::BindVertexArray(self.vao);
         }
+
+        Ok(())
     }
 
-    fn render(&mut self, current_time: f32) {
-        let model_matrix = Matrix4::from_scale(7.0);
-        let view_position = Point3::new(
-            (current_time * 0.35).cos() * 120.0,
-            (current_time * 0.4).cos() * 30.0,
-            (current_time * 0.35).sin() * 120.0,
+    fn render(&mut self, time: f32) -> Result<()> {
+        let model_matrix = glm::scaling(&glm::vec3(7.0, 7.0, 7.0));
+        let view_position = glm::vec3(
+            (time * 0.35).cos() * 120.0,
+            (time * 0.4).cos() * 30.0,
+            (time * 0.35).sin() * 120.0,
         );
-        let view_matrix = Matrix4::look_at(
-            view_position,
-            Point3::new(0.0, 30.0, 0.0),
-            vec3(0.0, 1.0, 0.0),
-        );
-        let projection_matrix = perspective(Deg(50.0), self.aspect_ratio, 0.1_f32, 1000_f32);
+        let view_matrix = glm::look_at(&view_position, &glm::vec3(0.0, 30.0, 0.0), &glm::Vec3::y());
+        let projection_matrix =
+            glm::perspective(self.aspect_ratio, 90_f32.to_radians(), 0.1_f32, 1000_f32);
         let mvp_matrix = projection_matrix * view_matrix * model_matrix;
         let mvp_matrix_location = self.append_program.uniform_location("mvp");
 
@@ -150,6 +150,8 @@ impl App for DemoApp {
             barrier();
             gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
         }
+
+        Ok(())
     }
 }
 
@@ -161,6 +163,7 @@ unsafe fn barrier() {
     );
 }
 
-fn main() {
-    DemoApp::new().run("Fragment List");
+fn main() -> Result<()> {
+    let app = DemoApp::default();
+    run_application(app, "Fragment List")
 }

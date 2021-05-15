@@ -1,8 +1,12 @@
-use support::app::*;
-use support::ktx::prepare_texture;
-use support::load_ktx;
+use anyhow::Result;
+use glutin::{event::ElementState, event::VirtualKeyCode, window::Window};
 use support::shader::*;
-use support::text::*;
+use support::{
+    app::{run_application, App},
+    ktx::prepare_texture,
+    load_ktx,
+    text::TextOverlay,
+};
 
 const BLACK: &[GLfloat; 4] = &[0.0, 0.0, 0.0, 0.0];
 
@@ -15,13 +19,6 @@ struct DemoApp {
 }
 
 impl DemoApp {
-    pub fn new() -> DemoApp {
-        DemoApp {
-            wrapmode: gl::CLAMP_TO_BORDER,
-            ..Default::default()
-        }
-    }
-
     fn load_shaders(&mut self) {
         self.shader_program = ShaderProgram::new();
         self.shader_program
@@ -40,7 +37,7 @@ impl DemoApp {
 }
 
 impl App for DemoApp {
-    fn initialize(&mut self, _: &mut glfw::Window) {
+    fn initialize(&mut self, _window: &Window) -> Result<()> {
         self.load_shaders();
         // NOTE: The 'flare.ktx' texture doesn't load properly in the sb7 example code
         //       or here. It's likely to just be a broken asset.
@@ -54,9 +51,11 @@ impl App for DemoApp {
         }
 
         self.text_overlay.initialize(80, 50);
+
+        Ok(())
     }
 
-    fn render(&mut self, _: f32) {
+    fn render(&mut self, _time: f32) -> Result<()> {
         self.shader_program.activate();
         unsafe {
             gl::ClearBufferfv(gl::COLOR, 0, BLACK as *const f32);
@@ -79,24 +78,26 @@ impl App for DemoApp {
         self.text_overlay.clear();
         self.text_overlay.draw_text(message, 0, 0);
         self.text_overlay.render();
+
+        Ok(())
     }
 
-    fn on_key(&mut self, key: Key, action: Action) {
-        if action != glfw::Action::Release {
-            return;
-        }
-        match (key, action) {
-            (glfw::Key::M, glfw::Action::Release) => {
+    fn on_key(&mut self, keycode: &VirtualKeyCode, keystate: &ElementState) -> Result<()> {
+        match (keycode, keystate) {
+            (VirtualKeyCode::M, ElementState::Pressed) => {
                 self.toggle_wrapmode();
             }
-            (glfw::Key::R, glfw::Action::Release) => {
+            (VirtualKeyCode::R, ElementState::Pressed) => {
                 self.load_shaders();
             }
             _ => (),
         }
+
+        Ok(())
     }
 }
 
-fn main() {
-    DemoApp::new().run("Mirror Clamp Edge");
+fn main() -> Result<()> {
+    let app = DemoApp::default();
+    run_application(app, "Mirror Clamp Edge")
 }

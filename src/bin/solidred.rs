@@ -1,29 +1,61 @@
+use anyhow::Result;
 use gl::types::*;
-use glfw::{Action, Context, Key};
+use glutin::{
+    dpi::PhysicalSize,
+    event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    window::WindowBuilder,
+    ContextBuilder,
+};
 
-fn main() {
-    let mut context = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-    let (mut window, events) = context
-        .create_window(600, 600, "Solid Red", glfw::WindowMode::Windowed)
-        .expect("Failed to create GLFW window.");
+fn main() -> Result<()> {
+    let event_loop = EventLoop::new();
+    let window_builder = WindowBuilder::new()
+        .with_title("Solid Red")
+        .with_inner_size(PhysicalSize::new(800, 600));
 
-    window.make_current();
-    window.set_key_polling(true);
-    window.set_framebuffer_size_polling(true);
+    let windowed_context = ContextBuilder::new()
+        .with_srgb(true)
+        .build_windowed(window_builder, &event_loop)?;
 
-    gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
+    let windowed_context = unsafe { windowed_context.make_current().unwrap() };
 
-    while !window.should_close() {
-        context.poll_events();
-        for (_, event) in glfw::flush_messages(&events) {
-            if let glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) = event {
-                window.set_should_close(true)
+    gl::load_with(|symbol| windowed_context.get_proc_address(symbol) as *const _);
+
+    event_loop.run(move |event, _, control_flow| {
+        *control_flow = ControlFlow::Poll;
+
+        match event {
+            Event::LoopDestroyed => return,
+            Event::WindowEvent { ref event, .. } => match event {
+                WindowEvent::Resized(physical_size) => {
+                    windowed_context.resize(*physical_size);
+                }
+
+                WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+                WindowEvent::KeyboardInput {
+                    input:
+                        KeyboardInput {
+                            state: keystate,
+                            virtual_keycode: Some(keycode),
+                            ..
+                        },
+                    ..
+                } => {
+                    if let (VirtualKeyCode::Escape, ElementState::Pressed) = (keycode, keystate) {
+                        *control_flow = ControlFlow::Exit;
+                    }
+                }
+                _ => (),
+            },
+            Event::MainEventsCleared => {
+                let red: [GLfloat; 4] = [1.0, 0.0, 0.0, 0.0];
+                unsafe {
+                    gl::ClearBufferfv(gl::COLOR, 0, &red as *const f32);
+                }
+                windowed_context.swap_buffers().unwrap();
             }
+            _ => (),
         }
-        let red: [GLfloat; 4] = [1.0, 0.0, 0.0, 0.0];
-        unsafe {
-            gl::ClearBufferfv(gl::COLOR, 0, &red as *const f32);
-        }
-        window.swap_buffers();
-    }
+    });
 }

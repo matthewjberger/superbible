@@ -1,9 +1,11 @@
+use anyhow::Result;
+use gl::types::*;
+use glutin::window::Window;
 use rand::Rng;
 use std::{mem, ptr};
-use support::app::*;
-use support::ktx::prepare_texture;
-use support::load_ktx;
-use support::shader::*;
+use support::{
+    app::run_application, app::App, ktx::prepare_texture, load_ktx, shader::ShaderProgram,
+};
 
 const BLACK: &[GLfloat; 4] = &[0.0, 0.0, 0.0, 0.0];
 
@@ -23,12 +25,6 @@ struct DemoApp {
 }
 
 impl DemoApp {
-    pub fn new() -> DemoApp {
-        DemoApp {
-            ..Default::default()
-        }
-    }
-
     fn load_shaders(&mut self) {
         self.shader_program = ShaderProgram::new();
         self.shader_program
@@ -39,7 +35,7 @@ impl DemoApp {
 }
 
 impl App for DemoApp {
-    fn initialize(&mut self, _: &mut glfw::Window) {
+    fn initialize(&mut self, _window: &Window) -> Result<()> {
         self.load_shaders();
 
         let (_, data) = load_ktx!("../../assets/textures/aliens.ktx").unwrap();
@@ -79,9 +75,11 @@ impl App for DemoApp {
             gl::Enable(gl::BLEND);
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
         }
+
+        Ok(())
     }
 
-    fn render(&mut self, current_time: f32) {
+    fn render(&mut self, time: f32) -> Result<()> {
         self.shader_program.activate();
         let mut droplet_buffer: [GLfloat; 256 * 4] = [0.0; 256 * 4];
         unsafe {
@@ -96,11 +94,11 @@ impl App for DemoApp {
             );
 
             for (index, droplet) in self.droplets.iter().enumerate() {
-                let fall_speed = 2.0 - ((current_time + index as f32) * droplet.fall_speed) % 4.31;
+                let fall_speed = 2.0 - ((time + index as f32) * droplet.fall_speed) % 4.31;
                 let offset = index * 4;
                 droplet_buffer[offset] = droplet.x_offset;
                 droplet_buffer[offset + 1] = fall_speed;
-                droplet_buffer[offset + 2] = current_time * droplet.rotation_speed;
+                droplet_buffer[offset + 2] = time * droplet.rotation_speed;
                 droplet_buffer[offset + 3] = 0.0;
             }
 
@@ -117,9 +115,12 @@ impl App for DemoApp {
                 gl::DrawArrays(gl::TRIANGLE_STRIP, 0, 4);
             }
         }
+
+        Ok(())
     }
 }
 
-fn main() {
-    DemoApp::new().run("Alien Rain");
+fn main() -> Result<()> {
+    let app = DemoApp::default();
+    run_application(app, "Alien Rain")
 }

@@ -1,54 +1,109 @@
-pub use gl::types::*;
-pub use glfw::{Action, Context, Key};
+use std::time::Instant;
+
+use anyhow::Result;
+use glutin::{
+    dpi::PhysicalSize,
+    event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    window::{Window, WindowBuilder},
+    ContextBuilder, ContextWrapper, PossiblyCurrent,
+};
 
 pub trait App {
-    fn initialize(&mut self, _: &mut glfw::Window) {}
-    fn update(&mut self) {}
-    fn render(&mut self, _: f32) {}
-    fn cleanup(&mut self) {}
-    fn on_resize(&mut self, _: i32, _: i32) {}
-    fn on_key(&mut self, _: Key, _: Action) {}
-    fn run(&mut self, title: &str) {
-        let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).expect("Failed to initialize glfw.");
-        let (mut window, events) = glfw
-            .create_window(800, 600, title, glfw::WindowMode::Windowed)
-            .expect("Failed to create GLFW window.");
-
-        window.make_current();
-        window.set_key_polling(true);
-        window.set_framebuffer_size_polling(true);
-
-        gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
-
-        self.initialize(&mut window);
-
-        while !window.should_close() {
-            glfw.poll_events();
-            for (_, event) in glfw::flush_messages(&events) {
-                self.handle_events(event, &mut window);
-            }
-
-            self.update();
-            self.render(glfw.get_time() as f32);
-            window.swap_buffers();
-        }
-
-        self.cleanup();
+    fn initialize(&mut self, _window: &Window) -> Result<()> {
+        Ok(())
     }
+    fn update(&mut self) -> Result<()> {
+        Ok(())
+    }
+    fn render(&mut self, _time: f32) -> Result<()> {
+        Ok(())
+    }
+    fn cleanup(&mut self) -> Result<()> {
+        Ok(())
+    }
+    fn on_key(&mut self, _keycode: &VirtualKeyCode, _keystate: &ElementState) -> Result<()> {
+        Ok(())
+    }
+    fn handle_events(&mut self, _event: Event<()>, _window: &Window) -> Result<()> {
+        Ok(())
+    }
+    fn on_resize(&mut self, _width: u32, _height: u32) -> Result<()> {
+        Ok(())
+    }
+}
 
-    fn handle_events(&mut self, event: glfw::WindowEvent, window: &mut glfw::Window) {
-        match event {
-            glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                window.set_should_close(true)
-            }
-            glfw::WindowEvent::Key(key, _, action, _) => self.on_key(key, action),
-            glfw::WindowEvent::FramebufferSize(width, height) => {
+pub fn run_application(mut app: impl App + 'static, title: &str) -> Result<()> {
+    let event_loop = EventLoop::new();
+    let window_builder = WindowBuilder::new()
+        .with_title(title)
+        .with_inner_size(PhysicalSize::new(800, 600));
+
+    let windowed_context = ContextBuilder::new()
+        .with_srgb(true)
+        .build_windowed(window_builder, &event_loop)?;
+
+    let context = unsafe { windowed_context.make_current().unwrap() };
+
+    gl::load_with(|symbol| context.get_proc_address(symbol) as *const _);
+
+    let start_time = Instant::now();
+
+    app.initialize(context.window())?;
+
+    event_loop.run(move |event, _, control_flow| {
+        if let Err(error) = run_loop(&mut app, &context, event, control_flow, &start_time) {
+            eprintln!("Application Error: {}", error);
+        }
+    });
+}
+
+fn run_loop(
+    app: &mut impl App,
+    context: &ContextWrapper<PossiblyCurrent, Window>,
+    event: Event<()>,
+    control_flow: &mut ControlFlow,
+    start_time: &Instant,
+) -> Result<()> {
+    *control_flow = ControlFlow::Poll;
+
+    match event {
+        Event::LoopDestroyed => app.cleanup()?,
+        Event::WindowEvent { ref event, .. } => match event {
+            WindowEvent::Resized(physical_size) => {
+                context.resize(*physical_size);
                 unsafe {
-                    gl::Viewport(0, 0, width, height);
+                    gl::Viewport(0, 0, physical_size.width as _, physical_size.height as _);
                 }
-                self.on_resize(width, height);
+                app.on_resize(physical_size.width, physical_size.height)?;
             }
-            _ => {}
+
+            WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
+            WindowEvent::KeyboardInput {
+                input:
+                    KeyboardInput {
+                        state: keystate,
+                        virtual_keycode: Some(keycode),
+                        ..
+                    },
+                ..
+            } => {
+                if let (VirtualKeyCode::Escape, ElementState::Pressed) = (keycode, keystate) {
+                    *control_flow = ControlFlow::Exit;
+                }
+                app.on_key(keycode, keystate)?;
+            }
+            _ => (),
+        },
+        Event::MainEventsCleared => {
+            app.update()?;
+            app.render(start_time.elapsed().as_secs_f32())?;
+            context.swap_buffers()?;
         }
+        _ => (),
     }
+
+    app.handle_events(event, context.window())?;
+
+    Ok(())
 }

@@ -81,9 +81,95 @@ To run any of the programs:
 
 ![Textured Triangle](images/12_texturedtriangle.png)
 
-
 ### KTX Viewer
 
 ![KTX Viewer](images/13_ktxviewer.gif)
 
 > This gif has artifacts from the method used to generate it but you get the idea.
+
+## Completion
+
+- [x] alienrain
+- [ ] basicfbo
+- [ ] bindlesstex
+- [ ] blendmatrix
+- [ ] blinnphong
+- [ ] bumpmapping
+- [ ] clipdistance
+- [ ] compressrgtc
+- [ ] csflocking
+- [ ] cubemapenv
+- [ ] cubicbezier
+- [ ] cullindirect
+- [ ] deferredshading
+- [ ] depthclamp
+- [ ] dflandscape
+- [ ] dispmap
+- [ ] dof
+- [ ] envmapsphere
+- [ ] equirectangular
+- [ ] fontdemo
+- [ ] fragcolorfrompos
+- [x] fragmentlist
+- [x] grass
+- [ ] gsculling
+- [ ] gslayered
+- [ ] gsquads
+- [ ] gstessellate
+- [ ] hdrbloom
+- [ ] hdrexposure
+- [ ] hdrtonemap
+- [ ] hqfilter
+- [ ] indexedcube
+- [ ] indirectmaterial
+- [x] instancedattribs
+- [ ] julia
+- [x] ktxview
+- [ ] linesmooth
+- [x] mirrorclampedge
+- [x] movingtri
+- [ ] msaanative
+- [ ] multidrawindirect
+- [ ] multimaterial
+- [ ] multiscissor
+- [ ] multiviewport
+- [ ] noperspective
+- [ ] normalviewer
+- [ ] objectexploder
+- [ ] ompparticles
+- [ ] packetbuffer
+- [ ] perpixelgloss
+- [ ] phonglighting
+- [ ] pmbfractal
+- [ ] pmbstreaming
+- [ ] polygonsmooth
+- [ ] prefixsum
+- [ ] prefixsum2d
+- [ ] programinfo
+- [ ] raytracer
+- [ ] rimlight
+- [ ] sampleshading
+- [ ] sb6mrender
+- [ ] sdfdemo
+- [ ] shadowmapping
+- [ ] shapedpoints
+- [x] simpleclear
+- [x] simpletexcoords
+- [x] simpletexture
+- [x] singlepoint
+- [x] singletri
+- [ ] sparsetexture
+- [x] spinnycube
+- [ ] springmass
+- [ ] ssao
+- [ ] starfield
+- [ ] stereo
+- [ ] subroutines
+- [ ] tessellatedcube
+- [ ] tessellatedgstri
+- [x] tessellatedtri
+- [ ] tessmodes
+- [ ] tesssubdivmodes
+- [ ] toonshading
+- [x] tunnel
+- [x] wrapmodes

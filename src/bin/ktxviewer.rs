@@ -1,4 +1,5 @@
 use anyhow::Result;
+use gl::types::*;
 use glutin::window::Window;
 use support::{
     app::{run_application, App},

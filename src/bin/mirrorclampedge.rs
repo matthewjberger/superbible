@@ -1,10 +1,11 @@
 use anyhow::Result;
+use gl::types::*;
 use glutin::{event::ElementState, event::VirtualKeyCode, window::Window};
-use support::shader::*;
 use support::{
     app::{run_application, App},
     ktx::prepare_texture,
     load_ktx,
+    shader::ShaderProgram,
     text::TextOverlay,
 };
 

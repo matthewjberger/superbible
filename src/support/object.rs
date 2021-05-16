@@ -85,15 +85,15 @@ impl VertexAttribute {
 
 #[derive(Debug, Default)]
 pub struct SubObject {
-    first: u32,
-    count: u32,
+    pub first: u32,
+    pub count: u32,
 }
 
 #[derive(Debug, Default)]
 pub struct Object {
     vbo: GLuint,
-    vao: GLuint,
-    sub_objects: Vec<SubObject>,
+    pub vao: GLuint,
+    pub sub_objects: Vec<SubObject>,
 }
 
 #[macro_export]

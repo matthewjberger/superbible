@@ -129,7 +129,7 @@ To run any of the programs:
 - [x] mirrorclampedge
 - [x] movingtri
 - [ ] msaanative
-- [ ] multidrawindirect
+- [x] multidrawindirect
 - [ ] multimaterial
 - [ ] multiscissor
 - [ ] multiviewport
